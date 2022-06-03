@@ -42,10 +42,12 @@ declare namespace Server {
     /**
      * The error handler
      */
-    export interface ErrorHandler extends types.ErrorHandler { } 
-}
+    export interface ErrorHandler extends types.ErrorHandler { }
 
-type ConstructableMiddleware = { new(): Server.Middleware };
+    export interface MiddlewareConstructor { 
+        new(): Server.Middleware;
+    }
+}
 
 interface Server {
     (req: http.IncomingMessage, res: http.ServerResponse): Promise<void>;
@@ -78,49 +80,15 @@ class Server extends Function {
     }
 
     /**
-     * Initialize a middleware
-     * @param middleware 
-     * @param handler a custom handler
-     * @example
-     * 
-     * import { Middleware, NextFunction, Context, initMiddleware } from "...";
-     * 
-     * // Merge declarations
-     * interface MyMiddleware extends Middleware { }
-     * 
-     * // Extend Function make the objects created by its constructor callable 
-     * class MyMiddleware extends Function {
-     *      constructor() {
-     *          super();
-     * 
-     *          // Return a proxy, when this function get called call the invoke method
-     *          return initMiddleware(this);
-     *      }
-     * 
-     *      async invoke?(ctx: Context, next: NextFunction) {
-     *          // Do something
-     *      }
-     * }
-     */
-    static initMiddleware(middleware: Server.Middleware, handler?: ProxyHandler<Server.Middleware>) {
-        return new Proxy(middleware, handler ?? {
-            apply(target, _, args) {
-                // @ts-ignore
-                return target.invoke(...args);
-            }
-        });
-    }
-
-    /**
      * Add a middleware to the middleware stack
      * @param m the middleware
      */
-    use(...m: (Server.Middleware | ConstructableMiddleware)[]) {
+    use(...m: (Server.Middleware | Server.MiddlewareConstructor)[]) {
         for (const Md of m) {
             // If middleware is a class, create an instance
             if (Md.toString().startsWith("class")) {
                 this.middlewares.push(
-                    new (Md as ConstructableMiddleware)()
+                    new (Md as Server.MiddlewareConstructor)()
                 );
                 continue;
             }
