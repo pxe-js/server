@@ -13,6 +13,8 @@ yarn add @pxe/server
 ```
 
 ## Usage
+A simple "Hello world" example:
+
 ```ts
 import Server from "@pxe/server";
 
