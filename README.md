@@ -27,4 +27,4 @@ app.set("port", 3000);
 app.ls();
 ```
 
-See full documentation [here](https://github.com/pxe-js/server/wiki)
+See full documentation [here](https://github.com/pxe-js/server/wiki).

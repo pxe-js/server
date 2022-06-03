@@ -1,5 +1,5 @@
 import parseResponse from "./parseResponse";
-import { Context } from "../declare";
+import { Context } from "./declare";
 
 export = function finishResponse(ctx: Context) {
     const res = ctx.response.raw;

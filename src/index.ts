@@ -1,7 +1,7 @@
 import createContext from "./createContext";
 import http from "http";
 import finishResponse from "./finishResponse";
-import * as types from "../declare";
+import * as types from "./declare";
 
 declare namespace Server {
     /**

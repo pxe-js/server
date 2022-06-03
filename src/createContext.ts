@@ -1,5 +1,5 @@
 import http from "http";
-import { Context, RequestMethod } from "../declare";
+import { Context, RequestMethod } from "./declare";
 import { getBody, getQuery } from "./bodyParser";
 
 export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse): Promise<Context> {
