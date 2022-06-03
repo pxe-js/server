@@ -1,4 +1,5 @@
 # PXE.js Server
+[![install size](https://packagephobia.com/badge?p=@pxe/server)](https://packagephobia.com/result?p=next)
 The server module of PXE.js.
 
 ## Installation
