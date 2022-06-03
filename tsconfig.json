@@ -1,0 +1,24 @@
+{
+    // Change this to match your project
+    "include": [
+        "src/**/*"  
+    ],
+    "compilerOptions": {
+        "allowJs": true,
+        "declaration": true,
+        "outDir": "lib",
+        "esModuleInterop": true,
+        "declarationDir": "types",
+        "target": "esnext",
+        "emitDeclarationOnly": true,
+        "lib": [
+            "esnext",
+            "DOM",
+            "es2022"
+        ],
+        "types": ["@types/node"],
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "allowUmdGlobalAccess": true
+    }
+}
