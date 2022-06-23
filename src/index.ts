@@ -17,8 +17,13 @@ declare namespace Server {
     /**
      * The Incoming request
      */
-    export interface IncomingRequest extends types.IncomingRequest { }
-
+    export interface IncomingRequest extends types.IncomingRequest {
+        /**
+         * The current server
+         */
+        readonly app: Server;
+    }
+    
     /**
      * Server response
      */
@@ -54,8 +59,8 @@ interface Server {
 }
 
 class Server extends Function {
-    private readonly middlewares: types.Middleware[];
-    private errorHandler: types.ErrorHandler;
+    private readonly middlewares: Server.Middleware[];
+    private errorHandler: Server.ErrorHandler;
     private readonly props: {
         [key: string]: any;
         port?: number | string;
@@ -149,7 +154,7 @@ class Server extends Function {
      * Set an error handler
      * @param handler 
      */
-    onError(handler: types.ErrorHandler) {
+    onError(handler: Server.ErrorHandler) {
         this.errorHandler = handler;
     }
 
@@ -161,6 +166,7 @@ class Server extends Function {
     async cb(req: http.IncomingMessage, res: http.ServerResponse) {
         try {
             const ctx = await createContext(req, res);
+            ctx.app = this;
 
             // Run middlewares
             const runMiddleware = async (i: number, ...a: any[]) => {
