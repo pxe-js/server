@@ -17,13 +17,8 @@ declare namespace Server {
     /**
      * The Incoming request
      */
-    export interface IncomingRequest extends types.IncomingRequest {
-        /**
-         * The current server
-         */
-        readonly app: Server;
-    }
-    
+    export interface IncomingRequest extends types.IncomingRequest { }
+
     /**
      * Server response
      */
@@ -37,7 +32,12 @@ declare namespace Server {
     /**
      * A context of the request and response
      */
-    export interface Context extends types.Context { }
+    export interface Context extends types.Context {
+        /**
+         * The current server
+         */
+        readonly app: Server;
+    }
 
     /**
      * Next function
@@ -49,7 +49,7 @@ declare namespace Server {
      */
     export interface ErrorHandler extends types.ErrorHandler { }
 
-    export interface MiddlewareConstructor { 
+    export interface MiddlewareConstructor {
         new(): Server.Middleware;
     }
 }
