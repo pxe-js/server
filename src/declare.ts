@@ -61,13 +61,6 @@ export interface NextFunction {
     (...args: any[]): Promise<void>;
 }
 
-/**
-* A middleware
-*/
-export interface Middleware {
-    (ctx: Context, next: NextFunction, ...args: any[]): Promise<void>;
-}
-
 export interface ServerResponse {
     /**
      * Raw response.
