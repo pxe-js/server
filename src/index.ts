@@ -27,7 +27,7 @@ declare namespace Server {
     /**
      * A middleware
      */
-    export interface Middleware { 
+    export interface Middleware {
         (ctx: Context, next: NextFunction, ...args: any[]): Promise<void>;
     }
 
@@ -175,14 +175,15 @@ class Server extends Function {
                 const currentMiddleware = this.middlewares[i];
 
                 // Run the next middleware
-                if (i < this.middlewares.length && typeof currentMiddleware === "function") {
-                    const next = async (...args: any[]) => runMiddleware(i + 1, ...args);
-                    // @ts-ignore
-                    return currentMiddleware(ctx, next, ...a);
-                }
+                if (i < this.middlewares.length && typeof currentMiddleware === "function")
+                    return currentMiddleware(
+                        // @ts-ignore
+                        ctx, 
+                        async (...args: any[]) => runMiddleware(i + 1, ...args), 
+                        ...a
+                    );
 
-                if (i === this.middlewares.length)
-                    finishResponse(ctx);
+                finishResponse(ctx);
             }
 
             await runMiddleware(0);
