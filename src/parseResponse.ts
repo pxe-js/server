@@ -1,6 +1,6 @@
 export = function parseResponse(body: any): string {
     // Special case for primitives
-    if (!body)
+    if (typeof body === "undefined" || body === null)
         return "";
 
     if (typeof body !== "object")
