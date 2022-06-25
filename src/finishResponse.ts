@@ -19,7 +19,7 @@ export = function finishResponse(ctx: Context) {
         res.statusMessage = ctx.response.status.message;
 
     // If nothing is set, return a 404
-    if (!ctx.response.body && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
+    if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
         res.statusCode = 404;
         res.end("Cannot " + ctx.request.method + " " + ctx.request.url);
     }

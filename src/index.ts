@@ -50,10 +50,6 @@ declare namespace Server {
      * The error handler
      */
     export interface ErrorHandler extends types.ErrorHandler { }
-
-    export interface MiddlewareConstructor {
-        new(): Middleware;
-    }
 }
 
 interface Server {
@@ -90,19 +86,8 @@ class Server extends Function {
      * Add a middleware to the middleware stack
      * @param m the middleware
      */
-    use(...m: (Server.Middleware | Server.MiddlewareConstructor)[]) {
-        for (const Md of m) {
-            // If middleware is a class, create an instance
-            if (Md.toString().startsWith("class")) {
-                this.middlewares.push(
-                    new (Md as Server.MiddlewareConstructor)()
-                );
-                continue;
-            }
-
-            // If middleware is a function, just add it
-            this.middlewares.push(Md as Server.Middleware);
-        }
+    use(...m: Server.Middleware[]) {
+        this.middlewares.push(...m);
     }
 
     /**

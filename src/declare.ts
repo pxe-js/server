@@ -70,19 +70,19 @@ export interface ServerResponse {
     /**
      * Response body
      */
-    body: any;
+    body?: any;
 
     /**
      * Response body type
      */
-    type: MIMEType;
+    type?: MIMEType;
 
     /**
      * The status
      */
     readonly status: {
-        code: number;
-        message: string;
+        code?: number;
+        message?: string;
     }
 
     /**

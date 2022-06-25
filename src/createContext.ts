@@ -16,13 +16,8 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
         },
         response: {
             raw: res,
-            body: null,
-            status: {
-                code: null,
-                message: null,
-            },
+            status: {},
             headers: {},
-            type: null,
             redirect(url, permanent = false) {
                 c.response.status.code = permanent ? 308 : 307;
                 c.response.headers['Location'] = url;
