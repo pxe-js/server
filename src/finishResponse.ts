@@ -1,5 +1,6 @@
 import parseResponse from "./parseResponse";
 import { Context } from "./declare";
+import { serialize } from "cookie";
 
 export = function finishResponse(ctx: Context) {
     const res = ctx.response.raw;
@@ -22,7 +23,14 @@ export = function finishResponse(ctx: Context) {
     if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
         res.statusCode = 404;
         res.end("Cannot " + ctx.request.method + " " + ctx.request.url);
+        return;
     }
+
+    // Cookie
+    if (ctx.response.cookie)
+        res.setHeader("Set-Cookie",
+            serialize("props", parseResponse(ctx.response.cookie), ctx.response.cookieOptions)
+        );
 
     /**
      * If the body is primitive, we can just send it

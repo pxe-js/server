@@ -1,4 +1,5 @@
 import http from "http";
+import { CookieSerializeOptions } from "cookie";
 
 export type RequestMethod =
     "GET" | "POST" | "PUT" | "DELETE" | "HEAD"
@@ -52,6 +53,11 @@ export interface IncomingRequest {
      * The request query parameters.
      */
     readonly query: { [key: string]: string };
+
+    /**
+     * Request cookie
+     */
+    readonly cookie: string;
 }
 
 /**
@@ -89,6 +95,16 @@ export interface ServerResponse {
      * The response headers
      */
     readonly headers: { [key: string]: string };
+
+    /**
+     * Cookie options
+     */
+    cookieOptions: CookieSerializeOptions;
+
+    /**
+     * Response cookie
+     */
+    cookie?: any;
 
     /**
      * Redirect to another URL

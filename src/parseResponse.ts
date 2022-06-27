@@ -7,7 +7,7 @@ export = function parseResponse(body: any): string {
         return String(body);
 
     // Start parsing
-    let parsed: string;
+    let parsed: string = "";
     if (!Array.isArray(body) && typeof body.toString === "function") {
         parsed = body.toString();
         if (parsed.startsWith("[object ") && parsed.endsWith("]"))
