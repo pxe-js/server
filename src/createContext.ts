@@ -5,12 +5,15 @@ import cookieParser from "cookie";
 
 export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse): Promise<Context> {
     const endUrlIndex = req.url.indexOf('?');
+    const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
 
     const c: Context = {
         request: {
             method: req.method as RequestMethod,
             raw: req,
-            url: req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex),
+            url: (pathname.endsWith("/") 
+                ? pathname.substring(0, pathname.length - 1) 
+                : pathname),
             headers: req.headers,
             body: await getBody(req),
             query: getQuery(req.url),

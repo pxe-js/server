@@ -25,8 +25,7 @@ app.use(async (ctx, next) => {
     await next();
 });
 
-app.set("port", 3000);
-app.ls();
+app.ls(3000);
 ```
 
 See full documentation [here](https://github.com/pxe-js/server/wiki).

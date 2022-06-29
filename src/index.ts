@@ -95,25 +95,33 @@ class Server extends Function {
      * @param key 
      * @param value 
      */
-    set(key: "port", value: number | string): void;
+    set(key: "port", value: string): string;
+
+    /**
+     * Set the target port
+     * @param key 
+     * @param value 
+     */
+    set(key: "port", value: number): number;
 
     /**
      * Set the target hostname
      * @param key 
      * @param value 
      */
-    set(key: "hostname", value: string): void;
+    set(key: "hostname", value: string): string;
 
     /**
      * Set a property
      * @param key 
      * @param value 
      */
-    set(key: string, value: any): void;
+    set<T>(key: string, value: T): T;
 
     // Set a property
     set(key: string, value: any) {
         this.props[key] = value;
+        return value;
     }
 
     /**
