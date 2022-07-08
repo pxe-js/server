@@ -169,14 +169,14 @@ class Server extends Function {
 
                 // Run the next middleware
                 if (i < this.middlewares.length && typeof currentMiddleware === "function")
-                    return currentMiddleware(
+                    currentMiddleware(
                         // @ts-ignore
-                        ctx, 
-                        async (...args: any[]) => runMiddleware(i + 1, ...args), 
+                        ctx,
+                        async (...args: any[]) => runMiddleware(i + 1, ...args),
                         ...a
                     );
-
-                finishResponse(ctx);
+                else
+                    finishResponse(ctx);
             }
 
             await runMiddleware(0);
