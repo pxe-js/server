@@ -1,11 +1,11 @@
 import http from "http";
 import { Context, RequestMethod } from "./declare";
 import { getBody, getQuery } from "./bodyParser";
+import cookie from "cookie";
 
 export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse): Promise<Context> {
     const endUrlIndex = req.url.indexOf('?');
     const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
-    const cookieValue = req.headers.cookie;
 
     const c: Context = {
         request: {
@@ -27,7 +27,10 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
                 c.response.headers['Location'] = url;
             },
         },
-        cookie: cookieValue?.substring(6) ?? undefined,
+        cookie: {
+            value: cookie.parse(req.headers.cookie ?? "")["connect.sid"],
+            options: {},
+        },
     }
     return c;
 }

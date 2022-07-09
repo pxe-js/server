@@ -52,6 +52,11 @@ declare namespace Server {
     export interface ErrorHandler {
         (err: Error, ctx: Context): Promise<void>;
     }
+
+    /**
+     * All cookie options
+     */
+    export interface CookieOptions extends types.CookieOptions { }
 }
 
 interface Server {

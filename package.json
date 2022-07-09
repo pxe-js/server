@@ -1,14 +1,16 @@
 {
   "name": "@pxe/server",
-  "version": "1.0.6-alpha.5",
+  "version": "1.0.7",
   "description": "A lightweight, simple and fast web server for Node.js",
   "exports": {
     ".": "./index.js"
   },
   "devDependencies": {
+    "@types/cookie": "^0.5.1",
     "@types/formidable": "^2.0.5",
     "@types/node": "^17.0.38",
     "autocannon": "^7.9.0",
+    "cookie": "^0.5.0",
     "esbuild": "^0.14.42",
     "formidable": "^2.0.1",
     "ts-node": "^10.8.0",

@@ -1,5 +1,6 @@
 import parseResponse from "./parseResponse";
 import { Context } from "./declare";
+import cookie from "cookie";
 
 export = function finishResponse(ctx: Context) {
     const res = ctx.response.raw;
@@ -18,8 +19,8 @@ export = function finishResponse(ctx: Context) {
     if (ctx.response.status.message)
         res.statusMessage = ctx.response.status.message;
 
-    if (ctx.cookie) 
-        res.setHeader('Set-Cookie', `props=${ctx.cookie}`);
+    if (ctx.cookie.value) 
+        res.setHeader('Set-Cookie', cookie.serialize("connect.sid", ctx.cookie.value, ctx.cookie.options));
 
     // If nothing is set, return a 404
     if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
