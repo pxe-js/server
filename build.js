@@ -1,3 +1,5 @@
+require("fs").rmSync("types", { recursive: true });
+
 require("child_process").exec("npx tsc");
 
 require("esbuild").buildSync({
