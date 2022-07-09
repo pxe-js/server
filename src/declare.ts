@@ -1,5 +1,4 @@
 import http from "http";
-import { CookieSerializeOptions } from "cookie";
 
 export type RequestMethod =
     "GET" | "POST" | "PUT" | "DELETE" | "HEAD"
@@ -53,11 +52,6 @@ export interface IncomingRequest {
      * The request query parameters.
      */
     readonly query: { [key: string]: string };
-
-    /**
-     * Request cookie
-     */
-    readonly cookie: string;
 }
 
 /**
@@ -97,16 +91,6 @@ export interface ServerResponse {
     readonly headers: { [key: string]: string };
 
     /**
-     * Cookie options
-     */
-    cookieOptions: CookieSerializeOptions;
-
-    /**
-     * Response cookie
-     */
-    cookie?: any;
-
-    /**
      * Redirect to another URL
      * @param url the new url
      */
@@ -126,8 +110,9 @@ export interface Context extends Record<string | number | symbol, any> {
      * The server response.
      */
     readonly response: ServerResponse;
-}
 
-export interface ErrorHandler {
-    (err: Error, req: http.IncomingMessage, res: http.ServerResponse): Promise<void>;
+    /**
+     * The cookie value
+     */
+    cookie?: string;
 }

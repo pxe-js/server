@@ -49,7 +49,9 @@ declare namespace Server {
     /**
      * The error handler
      */
-    export interface ErrorHandler extends types.ErrorHandler { }
+    export interface ErrorHandler {
+        (err: Error, ctx: Context): Promise<void>;
+    }
 }
 
 interface Server {
@@ -159,34 +161,37 @@ class Server extends Function {
      * @param res the response
      */
     async cb(req: http.IncomingMessage, res: http.ServerResponse) {
-        try {
-            const ctx = await createContext(req, res);
-            ctx.app = this;
+        if (req.url === '/favicon.ico')
+            return;
 
+        const ctx = await createContext(req, res);
+
+        ctx.app = this;
+
+        try {
             // Run middlewares
             const runMiddleware = async (i: number, ...a: any[]) => {
-                const currentMiddleware = this.middlewares[i];
-
                 // Run the next middleware
-                if (i < this.middlewares.length && typeof currentMiddleware === "function")
-                    currentMiddleware(
+                if (i < this.middlewares.length)
+                    return this.middlewares[i](
                         // @ts-ignore
                         ctx,
                         async (...args: any[]) => runMiddleware(i + 1, ...args),
                         ...a
                     );
-                else
-                    finishResponse(ctx);
             }
 
             await runMiddleware(0);
         } catch (err) {
             // Handle error
             if (this.errorHandler)
-                await this.errorHandler(err, req, res);
+                // @ts-ignore
+                await this.errorHandler(err, ctx);
             else
                 throw err;
         }
+
+        finishResponse(ctx);
     }
 
     /**
