@@ -177,9 +177,7 @@ export interface CookieOptions {
      * Specifies the boolean value for the {@link https://tools.ietf.org/html/rfc6265#section-5.2.5|`Secure` `Set-Cookie` attribute}. When truthy, the
      * `Secure` attribute is set, otherwise it is not. By default, the `Secure` attribute is not set.
      *
-     * *Note* be careful when setting this to `true`, as compliant clients will
-     * not send the cookie back to the server in the future if the browser does
-     * not have an HTTPS connection.
+     * *Note* be careful when setting this to `true`, as the server will not set the 'Set-Cookie' header if the browser does not have an HTTPS connection.
      */
     secure?: boolean | undefined;
 }
@@ -202,7 +200,24 @@ export interface Context extends Record<string | number | symbol, any> {
      * The cookie 
      */
     readonly cookie: {
+        /**
+         * The cookie options
+         */
         options?: CookieOptions;
+
+        /**
+         * The cookie value
+         */
         value?: string;
+
+        /**
+         * Delete the cookie
+         */
+        remove(): void;
+
+        /**
+         * Check whether the cookie is removed
+         */
+        readonly removed: boolean;
     }
 }

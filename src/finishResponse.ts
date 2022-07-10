@@ -4,6 +4,7 @@ import cookie from "cookie";
 
 export = function finishResponse(ctx: Context) {
     const res = ctx.response.raw;
+    const req = ctx.request.raw;
 
     // Send the response
     for (const key in ctx.response.headers)
@@ -19,8 +20,20 @@ export = function finishResponse(ctx: Context) {
     if (ctx.response.status.message)
         res.statusMessage = ctx.response.status.message;
 
-    if (ctx.cookie.value) 
-        res.setHeader('Set-Cookie', cookie.serialize("connect.sid", ctx.cookie.value, ctx.cookie.options));
+    if (ctx.cookie.value) {
+        // Check whether the cookie is removed or the protocol is not correct
+        // @ts-ignore
+        const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);
+
+        // Set cookie
+        res.setHeader('Set-Cookie', doRemoveCookie
+            ? "connect.sid=; max-age=0" 
+            : cookie.serialize(
+                "connect.sid", 
+                ctx.cookie.value, 
+                ctx.cookie.options
+            ));
+    }
 
     // If nothing is set, return a 404
     if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {

@@ -30,6 +30,11 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
         cookie: {
             value: cookie.parse(req.headers.cookie ?? "")["connect.sid"],
             options: {},
+            removed: false,
+            remove() {
+                // @ts-ignore
+                c.cookie.removed = true;
+            },
         },
     }
     return c;

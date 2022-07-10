@@ -166,8 +166,11 @@ class Server extends Function {
      * @param res the response
      */
     async cb(req: http.IncomingMessage, res: http.ServerResponse) {
-        if (req.url === '/favicon.ico')
+        // Ignore favicon
+        if (req.url === '/favicon.ico') {
+            res.end();
             return;
+        }
 
         const ctx = await createContext(req, res);
 
