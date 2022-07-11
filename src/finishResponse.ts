@@ -6,6 +6,13 @@ export = function finishResponse(ctx: Context) {
     const res = ctx.response.raw;
     const req = ctx.request.raw;
 
+    // If nothing is set, return a 404
+    if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
+        res.statusCode = 404;
+        res.end("Cannot " + ctx.request.method + " " + ctx.request.url);
+        return;
+    }
+
     // Send the response
     for (const key in ctx.response.headers)
         res.setHeader(key, ctx.response.headers[key]);
@@ -20,28 +27,20 @@ export = function finishResponse(ctx: Context) {
     if (ctx.response.status.message)
         res.statusMessage = ctx.response.status.message;
 
-    if (ctx.cookie.value) {
+    if (ctx.cookie.value || ctx.cookie.removed) {
         // Check whether the cookie is removed or the protocol is not correct
         // @ts-ignore
         const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);
 
         // Set cookie
         res.setHeader('Set-Cookie', doRemoveCookie
-            ? "connect.sid=; max-age=0" 
+            ? "connect.sid=; max-age=0"
             : cookie.serialize(
-                "connect.sid", 
-                ctx.cookie.value, 
+                "connect.sid",
+                ctx.cookie.value,
                 ctx.cookie.options
             ));
     }
-
-    // If nothing is set, return a 404
-    if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
-        res.statusCode = 404;
-        res.end("Cannot " + ctx.request.method + " " + ctx.request.url);
-        return;
-    }
-
     /**
      * If the body is primitive, we can just send it
      * If not:

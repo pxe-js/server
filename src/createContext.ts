@@ -34,6 +34,19 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
             remove() {
                 // @ts-ignore
                 c.cookie.removed = true;
+                Object.defineProperty(c.cookie, "value", {
+                    get() {
+                        return undefined;
+                    },
+                    enumerable: false
+                });
+
+                Object.defineProperty(c.cookie, "options", {
+                    get() {
+                        return {};
+                    },
+                    enumerable: false
+                });
             },
         },
     }
