@@ -46,7 +46,7 @@ export = function finishResponse(ctx: Context) {
     if (ctx.response.status.message)
         res.statusMessage = ctx.response.status.message;
 
-    if (ctx.cookie.value || ctx.cookie.removed) {
+    if (ctx.options.useDefaultCookie && (ctx.cookie.value || ctx.cookie.removed)) {
         // Check whether the cookie is removed or the protocol is not correct
         // @ts-ignore
         const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);

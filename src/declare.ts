@@ -192,7 +192,7 @@ export interface Context extends Record<string | number | symbol, any> {
     readonly request: IncomingRequest;
 
     /**
-     * The server response.
+     * The response.
      */
     readonly response: ServerResponse;
 
@@ -220,6 +220,21 @@ export interface Context extends Record<string | number | symbol, any> {
          */
         readonly removed: boolean;
     }
-}
 
-export type Env = "development" | "production";
+    /**
+     * Application options
+     */
+    readonly options: {
+        /**
+         * Specify the way the app will finish the response. Defaults to true
+         * 
+         * If set to false the app will not response to the request
+         */
+        finishResponse: boolean | ((ctx: Context) => Promise<void> | void);
+
+        /**
+         * Whether to use the default cookie implementation or not. Defaults to true
+         */
+        useDefaultCookie: boolean;
+    }
+}

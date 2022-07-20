@@ -49,6 +49,10 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
                 });
             },
         },
+        options: {
+            finishResponse: true,
+            useDefaultCookie: true,
+        }
     }
     return c;
 }

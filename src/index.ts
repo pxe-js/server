@@ -3,6 +3,7 @@ import http from "http";
 import finishResponse from "./finishResponse";
 import * as types from "./declare";
 import { readFileSync } from "fs";
+import EventEmitter from "events";
 
 declare namespace Server {
     /**
@@ -48,21 +49,9 @@ declare namespace Server {
     export interface NextFunction extends types.NextFunction { }
 
     /**
-     * The error handler
-     */
-    export interface ErrorHandler {
-        (err: Error, ctx: Context): Promise<void>;
-    }
-
-    /**
      * All cookie options
      */
     export interface CookieOptions extends types.CookieOptions { }
-
-    /**
-     * NODE_ENV values
-     */
-    export type Env = types.Env;
 }
 
 interface Server {
@@ -71,22 +60,16 @@ interface Server {
 
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
-    private errorHandler: Server.ErrorHandler;
     private ico: string;
-    private readonly props: {
-        [key: string]: any;
-        port?: number | string;
-        hostname?: string;
-    }
+    private readonly props: Record<string, any>;
 
     /**
      * Create the server
      */
-    constructor() {
+    constructor(public readonly events = new EventEmitter()) {
         super();
         this.middlewares = [];
         this.props = {};
-        this.env = (process.env.NODE_ENV || "development") as Server.Env;
 
         // Make this callable
         return new Proxy(this, {
@@ -106,54 +89,14 @@ class Server extends Function {
     }
 
     /**
-     * Set the target port
-     * @param key 
-     * @param value 
-     */
-    set(key: "port", value: string): string;
-
-    /**
-     * Set the target port
-     * @param key 
-     * @param value 
-     */
-    set(key: "port", value: number): number;
-
-    /**
-     * Set the target hostname
-     * @param key 
-     * @param value 
-     */
-    set(key: "hostname", value: string): string;
-
-    /**
      * Set a property
      * @param key 
      * @param value 
      */
-    set<T>(key: string, value: T): T;
-
-    // Set a property
-    set(key: string, value: any) {
+    set<T>(key: string, value: T) {
         this.props[key] = value;
         return value;
     }
-
-    /**
-     * Get the target port
-     */
-    get(key: "port"): number | string;
-
-    /**
-     * Get the target hostname
-     */
-    get(key: "hostname"): string;
-
-    /**
-     * Get a property
-     * @param key 
-     */
-    get(key: string): any;
 
     // Get props
     get(key: string) {
@@ -161,11 +104,19 @@ class Server extends Function {
     }
 
     /**
-     * Set an error handler
+     * Set error handler
+     * @param event 
      * @param handler 
      */
-    onError(handler: Server.ErrorHandler) {
-        this.errorHandler = handler;
+    on(event: "error", handler: (err: any, ctx: Server.Context) => Promise<void>): void;
+
+    /**
+     * Set a listener for a specific event
+     * @param event
+     * @param handler 
+     */
+    on(event: string, handler: (...args: any[]) => void) {
+        this.events.on(event, handler);
     }
 
     /**
@@ -175,11 +126,6 @@ class Server extends Function {
     icon(path: string) {
         this.ico = readFileSync(path).toString();
     }
-
-    /**
-     * Defaults to NODE_ENV
-     */
-    env: Server.Env;
 
     /**
      * Server callback
@@ -212,15 +158,27 @@ class Server extends Function {
 
             await runMiddleware(0);
         } catch (err) {
+            const errorListeners = this.events.listeners("error");
+            const lastListener = errorListeners[errorListeners.length - 1];
+
             // Handle error
-            if (typeof this.errorHandler === "function")
-                // @ts-ignore
-                await this.errorHandler(err, ctx);
+            if (typeof lastListener === "function")
+                await lastListener(err, ctx);
             else
                 throw err;
         }
 
-        finishResponse(ctx);
+        const doFinish = ctx.options.finishResponse;
+
+        if (doFinish === true)
+            finishResponse(ctx);
+
+        else if (typeof doFinish !== "function")
+            return;
+
+        // @ts-ignore
+        await doFinish(ctx);
+        return;
     }
 
     /**
