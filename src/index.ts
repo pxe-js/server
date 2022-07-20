@@ -2,6 +2,7 @@ import createContext from "./createContext";
 import http from "http";
 import finishResponse from "./finishResponse";
 import * as types from "./declare";
+import { readFileSync } from "fs";
 
 declare namespace Server {
     /**
@@ -57,6 +58,11 @@ declare namespace Server {
      * All cookie options
      */
     export interface CookieOptions extends types.CookieOptions { }
+
+    /**
+     * NODE_ENV values
+     */
+    export type Env = types.Env;
 }
 
 interface Server {
@@ -66,6 +72,7 @@ interface Server {
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
     private errorHandler: Server.ErrorHandler;
+    private ico: string;
     private readonly props: {
         [key: string]: any;
         port?: number | string;
@@ -79,6 +86,7 @@ class Server extends Function {
         super();
         this.middlewares = [];
         this.props = {};
+        this.env = (process.env.NODE_ENV || "development") as Server.Env;
 
         // Make this callable
         return new Proxy(this, {
@@ -161,6 +169,19 @@ class Server extends Function {
     }
 
     /**
+     * Register an icon
+     * @param path 
+     */
+    icon(path: string) {
+        this.ico = readFileSync(path).toString();
+    }
+
+    /**
+     * Defaults to NODE_ENV
+     */
+    env: Server.Env;
+
+    /**
      * Server callback
      * @param req the request
      * @param res the response
@@ -168,7 +189,7 @@ class Server extends Function {
     async cb(req: http.IncomingMessage, res: http.ServerResponse) {
         // Ignore favicon
         if (req.url === '/favicon.ico') {
-            res.end();
+            res.end(this.ico ?? "");
             return;
         }
 
@@ -192,7 +213,7 @@ class Server extends Function {
             await runMiddleware(0);
         } catch (err) {
             // Handle error
-            if (this.errorHandler)
+            if (typeof this.errorHandler === "function")
                 // @ts-ignore
                 await this.errorHandler(err, ctx);
             else

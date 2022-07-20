@@ -1,6 +1,6 @@
 require("fs").rmSync("types", { recursive: true });
 
-require("child_process").exec("npx tsc");
+require("child_process").exec("npx tsc").stderr.on("data", console.log);
 
 require("esbuild").buildSync({
     entryPoints: ["./src/index.ts"],

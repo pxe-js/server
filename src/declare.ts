@@ -221,3 +221,5 @@ export interface Context extends Record<string | number | symbol, any> {
         readonly removed: boolean;
     }
 }
+
+export type Env = "development" | "production";
