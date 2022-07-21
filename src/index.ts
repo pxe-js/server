@@ -62,11 +62,12 @@ class Server extends Function {
     private readonly middlewares: Server.Middleware[];
     private ico: string;
     private readonly props: Record<string, any>;
+    
 
     /**
      * Create the server
      */
-    constructor(public readonly events = new EventEmitter()) {
+    constructor(public readonly events: { [ev: string]: (...args: any[]) => void | Promise<void> } = {}) {
         super();
         this.middlewares = [];
         this.props = {};
@@ -116,7 +117,7 @@ class Server extends Function {
      * @param handler 
      */
     on(event: string, handler: (...args: any[]) => void) {
-        this.events.on(event, handler);
+        this.events[event] = handler;
     }
 
     /**
@@ -158,12 +159,11 @@ class Server extends Function {
 
             await runMiddleware(0);
         } catch (err) {
-            const errorListeners = this.events.listeners("error");
-            const lastListener = errorListeners[errorListeners.length - 1];
+            const errorListener = this.events["error"];
 
             // Handle error
-            if (typeof lastListener === "function")
-                await lastListener(err, ctx);
+            if (typeof errorListener === "function")
+                await errorListener(err, ctx);
             else
                 throw err;
         }
@@ -172,13 +172,10 @@ class Server extends Function {
 
         if (doFinish === true)
             finishResponse(ctx);
-
         else if (typeof doFinish !== "function")
             return;
-
-        // @ts-ignore
-        await doFinish(ctx);
-        return;
+        else 
+            await doFinish(ctx);
     }
 
     /**

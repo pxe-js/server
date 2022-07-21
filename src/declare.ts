@@ -233,7 +233,7 @@ export interface Context extends Record<string | number | symbol, any> {
         finishResponse: boolean | ((ctx: Context) => Promise<void> | void);
 
         /**
-         * Whether to use the default cookie implementation or not. Defaults to true
+         * Whether to use the default cookie implementation or not. Defaults to false
          */
         useDefaultCookie: boolean;
     }
