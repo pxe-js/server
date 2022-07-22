@@ -1,6 +1,6 @@
 {
   "name": "@pxe/server",
-  "version": "1.0.10-alpha.7",
+  "version": "1.0.10",
   "description": "A lightweight, simple and fast web server for Node.js",
   "exports": {
     ".": "./index.js"

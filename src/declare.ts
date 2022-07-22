@@ -28,7 +28,7 @@ declare namespace Server {
         readonly url: string;
         readonly headers: http.IncomingHttpHeaders;
         readonly body: any;
-        readonly query: { [key: string]: string };
+        readonly query: Record<string, string>;
     }
 
     export interface ServerResponse {
@@ -39,8 +39,20 @@ declare namespace Server {
             code?: number;
             message?: string;
         }
-        readonly headers: { [key: string]: string };
+        readonly headers: Record<string, string | readonly string[] | number>;
         redirect(url: string, permanent?: boolean): void;
+    }
+
+    export interface Cookie {
+        options?: CookieOptions;
+        value?: string;
+        remove(): void;
+        readonly removed: boolean;
+    }
+
+    export interface RequestOptions {
+        finishResponse: boolean | ((ctx: Context) => Promise<void> | void);
+        useDefaultCookie: boolean;
     }
 
     export interface Middleware {
@@ -50,16 +62,8 @@ declare namespace Server {
     export interface Context extends Record<string | number | symbol, any> {
         readonly request: IncomingRequest;
         readonly response: ServerResponse;
-        readonly cookie: {
-            options?: CookieOptions;
-            value?: string;
-            remove(): void;
-            readonly removed: boolean;
-        }
-        readonly options: {
-            finishResponse: boolean | ((ctx: Context) => Promise<void> | void);
-            useDefaultCookie: boolean;
-        }
+        readonly cookie: Cookie;
+        readonly options: RequestOptions;
     }
 
     export interface NextFunction {
