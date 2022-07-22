@@ -1,9 +1,9 @@
 import http from "http";
-import { Context, RequestMethod } from "./declare";
 import { getBody, getQuery } from "./bodyParser";
 import cookie from "cookie";
+import { Context, RequestMethod } from "./declare";
 
-export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse): Promise<Context> {
+export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): Promise<Context> {
     const endUrlIndex = req.url.indexOf('?');
     const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
 
@@ -23,6 +23,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
             status: {},
             headers: {},
             redirect(url, permanent = false) {
+                // @ts-ignore
                 c.response.status.code = permanent ? 308 : 307;
                 c.response.headers['Location'] = url;
             },
@@ -52,7 +53,8 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
         options: {
             finishResponse: true,
             useDefaultCookie: false,
-        }
+        },
+        app,
     }
     return c;
 }

@@ -1,58 +1,8 @@
 import createContext from "./createContext";
 import http from "http";
 import finishResponse from "./finishResponse";
-import * as types from "./declare";
 import { readFileSync } from "fs";
-import EventEmitter from "events";
-
-declare namespace Server {
-    /**
-     * Request methods
-     */
-    export type RequestMethod = types.RequestMethod;
-
-    /**
-     * Common MIME types
-     */
-    export type MIMEType = types.MIMEType;
-
-    /**
-     * The Incoming request
-     */
-    export interface IncomingRequest extends types.IncomingRequest { }
-
-    /**
-     * Server response
-     */
-    export interface ServerResponse extends types.ServerResponse { }
-
-    /**
-     * A middleware
-     */
-    export interface Middleware {
-        (ctx: Context, next: NextFunction, ...args: any[]): Promise<void>;
-    }
-
-    /**
-     * A context of the request and response
-     */
-    export interface Context extends types.Context {
-        /**
-         * The current server
-         */
-        readonly app: Server;
-    }
-
-    /**
-     * Next function
-     */
-    export interface NextFunction extends types.NextFunction { }
-
-    /**
-     * All cookie options
-     */
-    export interface CookieOptions extends types.CookieOptions { }
-}
+import Server from "./declare";
 
 interface Server {
     (req: http.IncomingMessage, res: http.ServerResponse): Promise<void>;
@@ -62,17 +12,16 @@ class Server extends Function {
     private readonly middlewares: Server.Middleware[];
     private ico: string;
     private readonly props: Record<string, any>;
-    
+    private readonly events: {
+        [ev: string]: (...args: any[]) => void | Promise<void>
+    }
 
-    /**
-     * Create the server
-     */
-    constructor(public readonly events: { [ev: string]: (...args: any[]) => void | Promise<void> } = {}) {
+    constructor() {
         super();
         this.middlewares = [];
         this.props = {};
+        this.events = {};
 
-        // Make this callable
         return new Proxy(this, {
             apply(target, _, args) {
                 // @ts-ignore
@@ -81,58 +30,40 @@ class Server extends Function {
         });
     }
 
-    /**
-     * Add a middleware to the middleware stack
-     * @param m the middleware
-     */
     use(...m: Server.Middleware[]) {
         this.middlewares.push(...m);
     }
 
-    /**
-     * Set a property
-     * @param key 
-     * @param value 
-     */
     set<T>(key: string, value: T) {
         this.props[key] = value;
         return value;
     }
 
-    // Get props
     get(key: string) {
         return this.props[key];
     }
 
-    /**
-     * Set error handler
-     * @param event 
-     * @param handler 
-     */
-    on(event: "error", handler: (err: any, ctx: Server.Context) => Promise<void>): void;
-
-    /**
-     * Set a listener for a specific event
-     * @param event
-     * @param handler 
-     */
-    on(event: string, handler: (...args: any[]) => void) {
+    on(event: "error", handler: (err: any, ctx: Server.Context) => Promise<void> | void): void;
+    on(event: "beforeFinish", handler: (ctx: Server.Context) => Promise<void> | void): void;
+    on(event: string, handler: (...args: any[]) => void | Promise<void>) {
         this.events[event] = handler;
     }
 
-    /**
-     * Register an icon
-     * @param path 
-     */
+    emit(event: "error", err: any, ctx: Server.Context): Promise<void> | void | boolean;
+    emit(event: "beforeFinish", ctx: Server.Context): Promise<void> | void | boolean;
+    emit(event: string, ...args: any[]): Promise<void> | void | boolean {
+        const evListener = this.events[event];
+
+        if (evListener)
+            return evListener(...args);
+
+        return false;
+    }
+
     icon(path: string) {
         this.ico = readFileSync(path).toString();
     }
 
-    /**
-     * Server callback
-     * @param req the request
-     * @param res the response
-     */
     async cb(req: http.IncomingMessage, res: http.ServerResponse) {
         // Ignore favicon
         if (req.url === '/favicon.ico') {
@@ -140,9 +71,7 @@ class Server extends Function {
             return;
         }
 
-        const ctx = await createContext(req, res);
-
-        ctx.app = this;
+        const ctx = await createContext(req, res, this);
 
         try {
             // Run middlewares
@@ -150,7 +79,6 @@ class Server extends Function {
                 // Run the next middleware
                 if (i < this.middlewares.length)
                     return this.middlewares[i](
-                        // @ts-ignore
                         ctx,
                         async (...args: any[]) => runMiddleware(i + 1, ...args),
                         ...a
@@ -159,42 +87,31 @@ class Server extends Function {
 
             await runMiddleware(0);
         } catch (err) {
-            const errorListener = this.events["error"];
-
-            // Handle error
-            if (typeof errorListener === "function")
-                await errorListener(err, ctx);
-            else
+            const res = this.emit("error", err, ctx);
+            if (res === false)
                 throw err;
         }
 
+        // Trigger beforeFinish event
+        await this.emit("beforeFinish", ctx);
+
+        // Finish the response
         const doFinish = ctx.options.finishResponse;
 
         if (doFinish === true)
             finishResponse(ctx);
         else if (typeof doFinish !== "function")
             return;
-        else 
+        else
             await doFinish(ctx);
     }
 
-    /**
-     * Start a server listening for connections.
-     * 
-     * An alias for 
-     * 
-     * ```js
-     * http.createServer(this).listen(port, hostname, backlog, listeningListener);
-     * ```
-     */
-    ls(port?: number | string, hostname?: string, backlog?: number, listeningListener?: () => void) {
-        const server = http.createServer(this);
-        server.listen(
-            Number(this.props.port ?? port),
-            this.props.hostname ?? hostname,
-            backlog,
-            listeningListener
-        );
+    ls(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): http.Server;
+    ls(port?: number, hostname?: string, listeningListener?: () => void): http.Server;
+    ls(port?: number, backlog?: number, listeningListener?: () => void): http.Server;
+    ls(port?: number, listeningListener?: () => void): http.Server;
+    ls(...args: any[]) {
+        return http.createServer(this).listen(...args);
     }
 }
 
