@@ -1,15 +1,14 @@
 import http from "http";
 import { getBody, getQuery } from "./bodyParser";
 import cookie from "cookie";
-import { Context, RequestMethod } from "./declare";
 
-export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): Promise<Context> {
+export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): Promise<any> {
     const endUrlIndex = req.url.indexOf('?');
     const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
 
-    const c: Context = {
+    const c = {
         request: {
-            method: req.method as RequestMethod,
+            method: req.method,
             raw: req,
             url: (pathname.endsWith("/") && pathname !== "/"
                 ? pathname.substring(0, pathname.length - 1)
@@ -22,7 +21,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
             raw: res,
             status: {},
             headers: {},
-            redirect(url, permanent = false) {
+            redirect(url: string, permanent = false) {
                 // @ts-ignore
                 c.response.status.code = permanent ? 308 : 307;
                 c.response.headers['Location'] = url;

@@ -1,4 +1,3 @@
-import { Context } from "./declare";
 import cookie from "cookie";
 
 function parseResponse(body: any): string {
@@ -21,7 +20,7 @@ function parseResponse(body: any): string {
     return parsed;
 }
 
-export = function finishResponse(ctx: Context) {
+export = function finishResponse(ctx: any) {
     const res = ctx.response.raw;
     const req = ctx.request.raw;
 
