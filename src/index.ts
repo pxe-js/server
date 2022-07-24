@@ -30,8 +30,8 @@ declare namespace Server {
         readonly method: RequestMethod;
         readonly url: string;
         readonly headers: http.IncomingHttpHeaders;
-        readonly body: any;
-        readonly query: Record<string, string>;
+        readonly body?: any;
+        readonly query?: Record<string, string>;
     }
 
     export interface ServerResponse {
