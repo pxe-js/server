@@ -1,5 +1,4 @@
 {
-    // Change this to match your project
     "include": [
         "src/**/*"  
     ],
@@ -19,6 +18,6 @@
         "types": ["@types/node"],
         "module": "CommonJS",
         "moduleResolution": "node",
-        "allowUmdGlobalAccess": true
+        "allowUmdGlobalAccess": true,
     }
 }

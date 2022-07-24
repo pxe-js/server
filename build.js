@@ -1,8 +1,14 @@
-require("fs").rmSync("types", { recursive: true });
+const fs = require("fs");
 
-require("child_process").exec("npx tsc").stderr.on("data", console.log);
+fs.rmSync("types", { recursive: true });
 
-require("esbuild").buildSync({
+require("child_process").exec("npx tsc", () => {
+    fs.rm("types/bodyParser.d.ts", () => {});
+    fs.rm("types/createContext.d.ts", () => {});
+    fs.rm("types/finishResponse.d.ts", () => {});
+}).stderr.on("data", console.log);
+
+require("esbuild").build({
     entryPoints: ["./src/index.ts"],
     loader: {
         ".ts": "ts",
@@ -13,3 +19,4 @@ require("esbuild").buildSync({
     minify: true,
     legalComments: "none"
 });
+
