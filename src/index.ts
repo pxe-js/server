@@ -3,6 +3,8 @@ import http from "http";
 import finishResponse from "./finishResponse";
 import { readFileSync } from "fs";
 
+type Extensible = Record<string | number | symbol, any>;
+
 declare namespace Server {
     export type RequestMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD"
         | "OPTIONS" | "PATCH" | "CONNECT" | "TRACE";
@@ -25,7 +27,7 @@ declare namespace Server {
         | "text/xml" | "application/atom+xml" | "application/vnd.mozilla.xul+xml" | "application/zip" | "video/3gpp"
         | "audio/3gpp" | "video/3gpp2" | "audio/3gpp2" | "application/x-7z-compressed" | "application/x-www-form-urlencoded";
 
-    export interface IncomingRequest {
+    export interface IncomingRequest extends Extensible {
         readonly raw: http.IncomingMessage;
         readonly method: RequestMethod;
         readonly url: string;
@@ -34,7 +36,7 @@ declare namespace Server {
         readonly query?: Record<string, string>;
     }
 
-    export interface ServerResponse {
+    export interface ServerResponse extends Extensible {
         readonly raw: http.ServerResponse;
         body?: any;
         type?: MIMEType;
@@ -46,7 +48,7 @@ declare namespace Server {
         redirect(url: string, permanent?: boolean): void;
     }
 
-    export interface Cookie {
+    export interface Cookie extends Extensible {
         options?: CookieOptions;
         value?: string;
         remove(): void;
@@ -55,7 +57,7 @@ declare namespace Server {
         readonly key: string,
     }
 
-    export interface RequestOptions {
+    export interface RequestOptions extends Extensible {
         finishResponse: boolean | ((ctx: Context) => Promise<void> | void);
         useDefaultCookie: boolean;
     }
@@ -64,7 +66,7 @@ declare namespace Server {
         (ctx: Context, next: NextFunction, ...args: any[]): Promise<void>;
     }
 
-    export interface Context extends Record<string | number | symbol, any> {
+    export interface Context extends Extensible {
         readonly request: IncomingRequest;
         readonly response: ServerResponse;
         readonly cookie: Cookie;
@@ -74,6 +76,7 @@ declare namespace Server {
     export interface NextFunction {
         (...args: any[]): Promise<void>;
     }
+    
     export interface CookieOptions {
         domain?: string | undefined;
         expires?: Date | undefined;
