@@ -103,6 +103,7 @@ class Server extends Function {
         this.middlewares = [];
         this.props = {};
         this.events = {};
+        this.ico = "";
 
         return new Proxy(this, {
             apply(target, _, args) {
@@ -136,10 +137,10 @@ class Server extends Function {
     emit(event: string, ...args: any[]): Promise<void> | void | boolean {
         const evListener = this.events[event];
 
-        if (evListener)
-            return evListener(...args);
+        if (!evListener)
+            return false;
 
-        return false;
+        return evListener(...args);
     }
 
     icon(path: string) {
@@ -149,7 +150,7 @@ class Server extends Function {
     async cb(req: http.IncomingMessage, res: http.ServerResponse) {
         // Ignore favicon
         if (req.url === '/favicon.ico') {
-            res.end(this.ico ?? "");
+            res.end(this.ico);
             return;
         }
 
@@ -180,12 +181,12 @@ class Server extends Function {
         // Finish the response
         const doFinish = ctx.options.finishResponse;
 
-        if (doFinish === true)
-            finishResponse(ctx);
-        else if (typeof doFinish !== "function")
+        if (!doFinish)
             return;
-        else
+        if (typeof doFinish === "function")
             await doFinish(ctx);
+        else
+            finishResponse(ctx);
     }
 
     ls(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): http.Server;
