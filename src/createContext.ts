@@ -1,11 +1,15 @@
 import http from "http";
-import { getBody, getQuery } from "./bodyParser";
+import { getBody as getBodyFromRequest, getQuery } from "./bodyParser";
 import cookie from "cookie";
-import { decrypt, iv, secretKey } from "./crypt";
+import { decrypt, encrypt, iv, secretKey } from "./crypt";
 
 export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): Promise<any> {
+    // For parsing URL
     const endUrlIndex = req.url.indexOf('?');
     const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
+
+    // The cookie current value
+    const cookieVal = req.headers.cookie;
 
     const c = {
         request: {
@@ -15,7 +19,9 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
                 ? pathname.substring(0, pathname.length - 1)
                 : pathname),
             headers: req.headers,
-            body: await getBody(req),
+            async getBody() {
+                return getBodyFromRequest(req);
+            },
             query: getQuery(req.url)
         },
         response: {
@@ -28,11 +34,13 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
                 c.response.headers['Location'] = url;
             },
         },
-        cookie: app.get("use cookie") === false ? null : {
-            value: cookie.parse(req.headers.cookie ?? "", {
+        cookie: {
+            value: cookieVal ? cookie.parse(cookieVal, {
                 decode: decrypt
-            })["connect.sid"],
-            options: {},
+            })["connect.sid"] : "",
+            options: {
+                encode: encrypt
+            },
             removed: false,
             iv: iv,
             key: secretKey,
@@ -56,7 +64,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
         },
         options: {
             finishResponse: true,
-            useDefaultCookie: !!app.get("use cookie"),
+            useDefaultCookie: false,
         },
         app,
     }

@@ -26,12 +26,15 @@ async function tryParseForm(req: http.IncomingMessage) {
 
 // Try parse to URLSearchParams
 function tryParseQuery(body: string): { [key: string]: string } {
-    const params =  new URLSearchParams(body);
+    const params = new URLSearchParams(body);
     const keys = Array.from(params.keys());
     const values = Array.from(params.values());
+    const res = {};
 
-    return keys.map((key, i) => ({ [key]: values[i] }))
-        .reduce((a, b) => ({ ...a, ...b }));
+    for (let i = 0; i < keys.length; ++i)
+        res[keys[i]] = values[i];
+
+    return res;
 }
 
 // Get the body of a request
@@ -41,33 +44,27 @@ export const getBody = async (req: http.IncomingMessage): Promise<any> => {
         return tryParseForm(req);
 
     // JSON and query body
-    return new Promise((res, rej) => {
-        let body = '';
-        req.on('data', data => {
-            body += data;
-            if (body.length > 1e7) {
-                req.socket.destroy();
-                rej("Request data to long");
-            }
-        });
-        req.on('end', () => {
-            // If body is empty
-            if (!body) 
-                return res(null);
+    const buffers = [];
 
-            let parsed: any = body;
+    for await (const chunk of req)
+        buffers.push(chunk);
 
-            // Check content type
-            if (req.headers['content-type']) {
-                // Parse by content type
-                if (req.headers['content-type'].startsWith('application/json'))
-                    parsed = tryParseJSON(body);
-                else if (req.headers['content-type'].startsWith('application/x-www-form-urlencoded'))
-                    parsed = tryParseQuery(body);
-            }
-            res(parsed);
-        });
-    });
+    const body = Buffer.concat(buffers).toString();
+    
+    // If body is empty
+    if (!body)
+        return null;
+
+    // Check content type
+    if (req.headers['content-type']) {
+        // Parse by content type
+        if (req.headers['content-type'].startsWith('application/json'))
+            return tryParseJSON(body);
+        else if (req.headers['content-type'].startsWith('application/x-www-form-urlencoded'))
+            return tryParseQuery(body);
+    } 
+
+    return body;
 }
 
 // Get query of an URL

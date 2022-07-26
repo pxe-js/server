@@ -30,7 +30,7 @@ declare namespace Server {
         readonly method: RequestMethod;
         readonly url: string;
         readonly headers: http.IncomingHttpHeaders;
-        readonly body?: any;
+        getBody(): Promise<any>;
         readonly query?: Record<string, string>;
     }
 

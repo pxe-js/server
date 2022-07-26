@@ -1,9 +1,8 @@
 import cookie from "cookie";
-import { encrypt } from "./crypt";
 
 function parseResponse(body: any): string {
     // Special case for primitives
-    if (typeof body === "undefined" || body === null)
+    if (body === undefined || body === null)
         return "";
 
     if (typeof body !== "object")
@@ -11,7 +10,7 @@ function parseResponse(body: any): string {
 
     // Start parsing
     let parsed: string = "";
-    if (!Array.isArray(body) && typeof body.toString === "function") {
+    if (!Array.isArray(body)) {
         parsed = body.toString();
         if (parsed.startsWith("[object ") && parsed.endsWith("]"))
             parsed = JSON.stringify(body);
@@ -47,7 +46,6 @@ export = function finishResponse(ctx: any) {
         res.statusMessage = ctx.response.status.message;
 
     if (ctx.options.useDefaultCookie && (ctx.cookie.value || ctx.cookie.removed)) {
-        ctx.cookie.options.encode = encrypt;
         // Check whether the cookie is removed or the protocol is not correct
         // @ts-ignore
         const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);
