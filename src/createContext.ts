@@ -22,7 +22,9 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
             async getBody() {
                 return getBodyFromRequest(req);
             },
-            query: getQuery(req.url)
+            get query() {
+                return getQuery(req.url);
+            }
         },
         response: {
             raw: res,
