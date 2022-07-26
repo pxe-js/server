@@ -1,6 +1,7 @@
 import http from "http";
 import { getBody, getQuery } from "./bodyParser";
 import cookie from "cookie";
+import { decrypt, iv, secretKey } from "./crypt";
 
 export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): Promise<any> {
     const endUrlIndex = req.url.indexOf('?');
@@ -28,9 +29,13 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
             },
         },
         cookie: {
-            value: cookie.parse(req.headers.cookie ?? "")["connect.sid"],
+            value: cookie.parse(req.headers.cookie ?? "", {
+                decode: decrypt
+            })["connect.sid"],
             options: {},
             removed: false,
+            iv: iv,
+            key: secretKey,
             remove() {
                 // @ts-ignore
                 c.cookie.removed = true;

@@ -1,4 +1,5 @@
 import cookie from "cookie";
+import { encrypt } from "./crypt";
 
 function parseResponse(body: any): string {
     // Special case for primitives
@@ -46,6 +47,7 @@ export = function finishResponse(ctx: any) {
         res.statusMessage = ctx.response.status.message;
 
     if (ctx.options.useDefaultCookie && (ctx.cookie.value || ctx.cookie.removed)) {
+        ctx.cookie.options.encode = encrypt;
         // Check whether the cookie is removed or the protocol is not correct
         // @ts-ignore
         const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);

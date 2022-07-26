@@ -51,6 +51,8 @@ declare namespace Server {
         value?: string;
         remove(): void;
         readonly removed: boolean;
+        readonly iv: Buffer,
+        readonly key: string,
     }
 
     export interface RequestOptions {

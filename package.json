@@ -1,6 +1,6 @@
 {
   "name": "@pxe/server",
-  "version": "1.0.11-alpha.2",
+  "version": "1.0.11-alpha.3",
   "description": "A lightweight, simple and fast web server for Node.js",
   "exports": {
     ".": "./index.js"
@@ -12,7 +12,9 @@
     "autocannon": "^7.9.0",
     "cookie": "^0.5.0",
     "esbuild": "^0.14.42",
+    "express": "^4.18.1",
     "formidable": "^2.0.1",
+    "koa": "^2.13.4",
     "ts-node": "^10.8.0",
     "typescript": "^4.7.2"
   },
@@ -32,7 +34,7 @@
     "url": "https://github.com/pxe-js/server/issues"
   },
   "scripts": {
-    "bench": "autocannon http://localhost:3000 -c 100 -d 5 -p 10"
+    "bench": "autocannon http://localhost:8080 -c 100 -d 5 -p 10"
   },
   "homepage": "https://pxe.vercel.app"
 }
