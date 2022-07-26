@@ -28,7 +28,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
                 c.response.headers['Location'] = url;
             },
         },
-        cookie: {
+        cookie: app.get("use cookie") === false ? null : {
             value: cookie.parse(req.headers.cookie ?? "", {
                 decode: decrypt
             })["connect.sid"],
@@ -56,7 +56,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
         },
         options: {
             finishResponse: true,
-            useDefaultCookie: false,
+            useDefaultCookie: !!app.get("use cookie"),
         },
         app,
     }
