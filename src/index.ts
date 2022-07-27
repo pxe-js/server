@@ -71,6 +71,7 @@ declare namespace Server {
         readonly response: ServerResponse;
         readonly cookie: Cookie;
         readonly options: RequestOptions;
+        readonly app: Server;
     }
 
     export interface NextFunction {
@@ -89,9 +90,7 @@ declare namespace Server {
     }
 }
 
-interface Server {
-    (req: http.IncomingMessage, res: http.ServerResponse): Promise<void>;
-}
+interface Server extends http.RequestListener {};
 
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
