@@ -2,9 +2,6 @@ import cookie from "cookie";
 
 function parseResponse(body: any): string {
     // Special case for primitives
-    if (body === undefined || body === null)
-        return "";
-
     if (typeof body !== "object")
         return String(body);
 
@@ -21,31 +18,34 @@ function parseResponse(body: any): string {
 }
 
 export = function finishResponse(ctx: any) {
-    const res = ctx.response.raw;
-    const req = ctx.request.raw;
+    const resp = ctx.response;
+    const requ = ctx.request;
+
+    const res = resp.raw;
+    const req = requ.raw;
 
     // If nothing is set, return a 404
-    if (typeof ctx.response.body === "undefined" && !ctx.response.type && !ctx.response.status.code && !ctx.response.status.message) {
+    if (typeof resp.body === "undefined" && !resp.type && !resp.status.code && !resp.status.message) {
         res.statusCode = 404;
-        res.end("Cannot " + ctx.request.method + " " + ctx.request.url);
+        res.end("Cannot " + requ.method + " " + requ.url);
         return;
     }
 
     // Send the response
-    for (const key in ctx.response.headers)
-        res.setHeader(key, ctx.response.headers[key]);
+    for (const key in resp.headers)
+        res.setHeader(key, resp.headers[key]);
 
     // Check properties
-    if (ctx.response.type)
-        res.setHeader('Content-Type', ctx.response.type);
+    if (resp.type)
+        res.setHeader('Content-Type', resp.type);
 
-    if (ctx.response.status.code)
-        res.statusCode = ctx.response.status.code;
+    if (resp.status.code)
+        res.statusCode = resp.status.code;
 
-    if (ctx.response.status.message)
-        res.statusMessage = ctx.response.status.message;
+    if (resp.status.message)
+        res.statusMessage = resp.status.message;
 
-    if (ctx.options.useDefaultCookie && (ctx.cookie.value || ctx.cookie.removed)) {
+    if (ctx.options.useDefaultCookie && ctx.cookie && (ctx.cookie.value || ctx.cookie.removed)) {
         // Check whether the cookie is removed or the protocol is not correct
         // @ts-ignore
         const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);
@@ -65,5 +65,5 @@ export = function finishResponse(ctx: any) {
      * If the body has a toString method and does not convert to something like "[object Object]", we can send it
      * Else parse it using JSON.stringify
      */
-    res.end(parseResponse(ctx.response.body));
+    res.end(parseResponse(resp.body));
 }

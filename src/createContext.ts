@@ -3,7 +3,7 @@ import { getBody as getBodyFromRequest, getQuery } from "./bodyParser";
 import cookie from "cookie";
 import { decrypt, encrypt, iv, secretKey } from "./crypt";
 
-export = async function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): Promise<any> {
+export = function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): any {
     // For parsing URL
     const endUrlIndex = req.url.indexOf('?');
     const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
@@ -22,9 +22,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
             async getBody() {
                 return getBodyFromRequest(req);
             },
-            get query() {
-                return getQuery(req.url);
-            }
+            query: getQuery(req.url)
         },
         response: {
             raw: res,
@@ -36,7 +34,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
                 c.response.headers['Location'] = url;
             },
         },
-        cookie: {
+        cookie: app.get("disable cookie") ? null : {
             value: cookieVal ? cookie.parse(cookieVal, {
                 decode: decrypt
             })["connect.sid"] : "",
@@ -66,7 +64,7 @@ export = async function createContext(req: http.IncomingMessage, res: http.Serve
         },
         options: {
             finishResponse: true,
-            useDefaultCookie: false,
+            useDefaultCookie: app.get("disable cookie") === false,
         },
         app,
     }

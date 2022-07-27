@@ -76,7 +76,7 @@ declare namespace Server {
     export interface NextFunction {
         (...args: any[]): Promise<void>;
     }
-    
+
     export interface CookieOptions {
         domain?: string | undefined;
         expires?: Date | undefined;
@@ -157,7 +157,7 @@ class Server extends Function {
             return;
         }
 
-        const ctx = await createContext(req, res, this) as Server.Context;
+        const ctx = createContext(req, res, this) as Server.Context;
 
         try {
             // Run middlewares
@@ -187,9 +187,9 @@ class Server extends Function {
         if (!doFinish)
             return;
         if (typeof doFinish === "function")
-            await doFinish(ctx);
-        else
-            finishResponse(ctx);
+            return doFinish(ctx);
+
+        finishResponse(ctx);
     }
 
     ls(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): http.Server;

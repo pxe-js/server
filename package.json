@@ -34,7 +34,7 @@
     "url": "https://github.com/pxe-js/server/issues"
   },
   "scripts": {
-    "bench": "autocannon http://localhost:8080 -c 100 -d 5 -p 10"
+    "bench": "autocannon http://localhost:8080 --connections 512 --duration 15"
   },
   "homepage": "https://pxe.vercel.app"
 }
