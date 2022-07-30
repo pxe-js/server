@@ -196,7 +196,7 @@ class Server extends Function {
     ls(port?: number, backlog?: number, listeningListener?: () => void): http.Server;
     ls(port?: number, listeningListener?: () => void): http.Server;
     ls(...args: any[]) {
-        return http.createServer(this).listen(...args);
+        return http.createServer((req, res) => setImmediate(this, req, res)).listen(...args);
     }
 }
 

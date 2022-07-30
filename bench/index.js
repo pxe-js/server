@@ -1,4 +1,4 @@
-const Server = require("..");
+const Server = require("../types");
 
 const regx = /^\/user\/(?<id>[0-9]+)/i;
 
