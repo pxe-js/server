@@ -90,7 +90,7 @@ declare namespace Server {
     }
 }
 
-interface Server extends http.RequestListener {};
+interface Server extends http.RequestListener { };
 
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
@@ -109,8 +109,9 @@ class Server extends Function {
 
         return new Proxy(this, {
             apply(target, _, args) {
-                // @ts-ignore
-                return target.cb(...args);
+                const cb = target.cb();
+                const [req, res] = args;
+                setImmediate(cb, req, res);
             }
         });
     }
@@ -149,46 +150,48 @@ class Server extends Function {
         this.ico = readFileSync(path).toString();
     }
 
-    async cb(req: http.IncomingMessage, res: http.ServerResponse) {
-        // Ignore favicon
-        if (req.url === '/favicon.ico') {
-            res.end(this.ico);
-            return;
-        }
-
-        const ctx = createContext(req, res, this) as Server.Context;
-
-        try {
-            // Run middlewares
-            const runMiddleware = async (i: number, ...a: any[]) => {
-                // Run the next middleware
-                if (i < this.middlewares.length)
-                    return this.middlewares[i](
-                        ctx,
-                        async (...args: any[]) => runMiddleware(i + 1, ...args),
-                        ...a
-                    );
+    cb() {
+        return async (req: http.IncomingMessage, res: http.ServerResponse) => {
+            // Ignore favicon
+            if (req.url === '/favicon.ico') {
+                res.end(this.ico);
+                return;
             }
 
-            await runMiddleware(0);
-        } catch (err) {
-            const res = this.emit("error", err, ctx);
-            if (res === false)
-                throw err;
+            const ctx = createContext(req, res, this) as Server.Context;
+
+            try {
+                // Run middlewares
+                const runMiddleware = async (i: number, ...a: any[]) => {
+                    // Run the next middleware
+                    if (i < this.middlewares.length)
+                        return this.middlewares[i](
+                            ctx,
+                            async (...args: any[]) => runMiddleware(i + 1, ...args),
+                            ...a
+                        );
+                }
+
+                await runMiddleware(0);
+            } catch (err) {
+                const res = this.emit("error", err, ctx);
+                if (res === false)
+                    throw err;
+            }
+
+            // Trigger beforeFinish event
+            await this.emit("beforeFinish", ctx);
+
+            // Finish the response
+            const doFinish = ctx.options.finishResponse;
+
+            if (!doFinish)
+                return;
+            if (typeof doFinish === "function")
+                return doFinish(ctx);
+
+            finishResponse(ctx);
         }
-
-        // Trigger beforeFinish event
-        await this.emit("beforeFinish", ctx);
-
-        // Finish the response
-        const doFinish = ctx.options.finishResponse;
-
-        if (!doFinish)
-            return;
-        if (typeof doFinish === "function")
-            return doFinish(ctx);
-
-        finishResponse(ctx);
     }
 
     ls(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): http.Server;
@@ -196,7 +199,7 @@ class Server extends Function {
     ls(port?: number, backlog?: number, listeningListener?: () => void): http.Server;
     ls(port?: number, listeningListener?: () => void): http.Server;
     ls(...args: any[]) {
-        return http.createServer((req, res) => setImmediate(this, req, res)).listen(...args);
+        return http.createServer(this).listen(...args);
     }
 }
 
