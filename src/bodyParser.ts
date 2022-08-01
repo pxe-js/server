@@ -76,3 +76,29 @@ export const getQuery = (url: string): { [key: string]: string } => {
 
     return tryParseQuery(url.substring(beginQueryIndex));
 };
+
+export const imageMIME = {
+    bmp: "bmp",
+    cod: "cis-cod",
+    gif: "gif",
+    ief: "ief",
+    jpe: "jpeg",
+    jpeg: "jpeg",
+    jpg: "jpeg",
+    jfif: "pipeg",
+    svg: "svg+xml",
+    tif: "tiff",
+    tiff: "tiff",
+    ras: "x-cmu-raster",
+    cmx: "x-cmx",
+    ico: "x-icon",
+    pnm: "x-portable-anymap",
+    pbm: "x-portable-bitmap",
+    pgm: "x-portable-graymap",
+    ppm: "x-portable-pixmap",
+    rgb: "x-rgb",
+    xbm: "x-xbitmap",
+    xpm: "x-xpixmap",
+    xwd: "x-xwindowdump",
+    png: "png",
+};

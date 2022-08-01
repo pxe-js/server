@@ -1,7 +1,8 @@
 import createContext from "./createContext";
 import http from "http";
 import finishResponse from "./finishResponse";
-import { readFileSync } from "fs";
+import { imageMIME } from "./bodyParser";
+import { readFile, readFileSync } from "fs";
 
 type Extensible = Record<string | number | symbol, any>;
 
@@ -94,7 +95,10 @@ interface Server extends http.RequestListener { };
 
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
-    private ico: string;
+    private ico: {
+        content?: Buffer;
+        type?: string;
+    };
     private readonly props: Record<string, any>;
     private readonly events: {
         [ev: string]: (...args: any[]) => void | Promise<void>
@@ -105,7 +109,7 @@ class Server extends Function {
         this.middlewares = [];
         this.props = {};
         this.events = {};
-        this.ico = "";
+        this.ico = {};
 
         return new Proxy(this, {
             apply(target, _, args) {
@@ -147,14 +151,21 @@ class Server extends Function {
     }
 
     icon(path: string) {
-        this.ico = readFileSync(path).toString();
+        const ext = path.slice(
+            path.lastIndexOf(".") + 1,
+            path.length
+        );
+
+        this.ico.content = readFileSync(path);
+        this.ico.type = "image/" + (imageMIME[ext] ?? "text/plain");
     }
 
     cb() {
         return async (req: http.IncomingMessage, res: http.ServerResponse) => {
             // Ignore favicon
             if (req.url === '/favicon.ico') {
-                res.end(this.ico);
+                res.setHeader("Content-Type", this.ico.type || "text/plain");
+                res.end(this.ico.content);
                 return;
             }
 
