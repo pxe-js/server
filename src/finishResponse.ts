@@ -1,8 +1,8 @@
 import cookie from "cookie";
 
-function parseResponse(body: any): string {
+function parseResponse(body: any): string | Buffer {
     // Special case for primitives
-    if (typeof body !== "object")
+    if (typeof body !== "object" || Buffer.isBuffer(body))
         return String(body);
 
     // Start parsing

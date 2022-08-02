@@ -174,8 +174,8 @@ class Server extends Function {
 
                 await runMiddleware(0);
             } catch (err) {
-                const res = this.emit("error", err, ctx);
-                if (res === false)
+                const errHandlerRes = this.emit("error", err, ctx);
+                if (errHandlerRes === false)
                     throw err;
             }
 
