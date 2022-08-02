@@ -1,17 +1,19 @@
 import cookie from "cookie";
 
 function parseResponse(body: any): string | Buffer {
-    // Special case for primitives
-    if (typeof body !== "object" || Buffer.isBuffer(body))
+    if (typeof body === "string" || Buffer.isBuffer(body))
+        return body;
+
+    // Special case for primitives 
+    if (typeof body !== "object")
         return String(body);
 
-    // Start parsing
-    let parsed: string = "";
-    if (!Array.isArray(body)) {
-        parsed = body.toString();
-        if (parsed.startsWith("[object ") && parsed.endsWith("]"))
-            parsed = JSON.stringify(body);
-    } else  
+    if (Array.isArray(body))
+        return JSON.stringify(body);
+
+    // Parsing an object
+    let parsed = body.toString();
+    if (parsed.startsWith("[object ") && parsed.endsWith("]"))
         parsed = JSON.stringify(body);
 
     return parsed;
