@@ -3,9 +3,9 @@ import http from "http";
 import finishResponse from "./finishResponse";
 import { readFileSync } from "fs";
 
-type Extensible = Record<string | number | symbol, any>;
-
 declare namespace Server {
+    export type Extensible = Record<string | number | symbol, any>;
+
     export type RequestMethod = "GET" | "POST" | "PUT" | "DELETE" | "HEAD"
         | "OPTIONS" | "PATCH" | "CONNECT" | "TRACE";
 
@@ -32,7 +32,7 @@ declare namespace Server {
         readonly method: RequestMethod;
         readonly url: string;
         readonly headers: http.IncomingHttpHeaders;
-        getBody(): Promise<any>;
+        readonly body: Promise<any>;
         readonly query?: Record<string, string>;
     }
 
