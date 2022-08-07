@@ -19,10 +19,12 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
                 ? pathname.substring(0, pathname.length - 1)
                 : pathname),
             headers: req.headers,
-            async getBody() {
+            get body() {
                 return getBodyFromRequest(req);
             },
-            query: getQuery(req.url)
+            get query() {
+                return getQuery(req.url);
+            }
         },
         response: {
             raw: res,
@@ -67,6 +69,6 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
             useDefaultCookie: app.get("disable cookie") === false,
         },
         app,
-    }
+    };
     return c;
 }
