@@ -109,9 +109,8 @@ class Server extends Function {
 
         return new Proxy(this, {
             apply(target, _, args) {
-                const cb = target.cb();
-                const [req, res] = args;
-                setImmediate(cb, req, res);
+                // @ts-ignore
+                return target.cb()(...args);
             }
         });
     }
@@ -157,7 +156,6 @@ class Server extends Function {
                 return res.end(this.ico);
 
             const ctx = createContext(req, res, this) as Server.Context;
-
             try {
                 // Run middlewares
                 const runMiddleware = async (i: number, ...a: any[]) => {
@@ -176,7 +174,6 @@ class Server extends Function {
                 if (errHandlerRes === false)
                     throw err;
             }
-
             // Trigger beforeFinish event
             await this.emit("beforeFinish", ctx);
 
@@ -185,7 +182,7 @@ class Server extends Function {
 
             if (!doFinish)
                 return;
-            if (typeof doFinish === "function")
+            if (typeof doFinish === "function") 
                 return doFinish(ctx);
 
             finishResponse(ctx);

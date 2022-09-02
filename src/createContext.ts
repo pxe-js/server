@@ -3,11 +3,17 @@ import { getBody as getBodyFromRequest, getQuery } from "./bodyParser";
 import cookie from "cookie";
 import { decrypt, encrypt, iv, secretKey } from "./crypt";
 
-export = function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): any {
+function parseUrl(url: string) {
     // For parsing URL
-    const endUrlIndex = req.url.indexOf('?');
-    const pathname = req.url.slice(0, endUrlIndex === -1 ? req.url.length : endUrlIndex);
+    const endUrlIndex = url.indexOf('?');
+    const pathname = url.slice(0, endUrlIndex === -1 ? url.length : endUrlIndex);
 
+    return pathname.endsWith("/") && pathname !== "/"
+        ? pathname.substring(0, pathname.length - 1)
+        : pathname;
+}
+
+export = function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): any {
     // The cookie current value
     const cookieVal = req.headers.cookie;
 
@@ -15,9 +21,9 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
         request: {
             method: req.method,
             raw: req,
-            url: (pathname.endsWith("/") && pathname !== "/"
-                ? pathname.substring(0, pathname.length - 1)
-                : pathname),
+            get url() {
+                return parseUrl(req.url);
+            },
             headers: req.headers,
             get body() {
                 return getBodyFromRequest(req);
