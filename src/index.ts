@@ -57,11 +57,6 @@ declare namespace Server {
         readonly key: string,
     }
 
-    export interface RequestOptions extends Extensible {
-        finishResponse: boolean | ((ctx: Context) => Promise<void> | void);
-        useDefaultCookie: boolean;
-    }
-
     export interface Middleware {
         (ctx: Context, next: NextFunction, ...args: any[]): Promise<void>;
     }
@@ -70,7 +65,6 @@ declare namespace Server {
         readonly request: IncomingRequest;
         readonly response: ServerResponse;
         readonly cookie: Cookie;
-        readonly options: RequestOptions;
         readonly app: Server;
     }
 
@@ -104,7 +98,7 @@ class Server extends Function {
         super();
         this.middlewares = [];
         this.props = {};
-        this.events = {};
+        this.events = { finish: finishResponse };
         this.ico = Buffer.from("");
 
         return new Proxy(this, {
@@ -129,13 +123,13 @@ class Server extends Function {
     }
 
     on(event: "error", handler: (err: any, ctx: Server.Context) => Promise<void> | void): void;
-    on(event: "beforeFinish", handler: (ctx: Server.Context) => Promise<void> | void): void;
+    on(event: "finish", handler: (ctx: Server.Context) => Promise<void> | void): void;
     on(event: string, handler: (...args: any[]) => void | Promise<void>) {
         this.events[event] = handler;
     }
 
     emit(event: "error", err: any, ctx: Server.Context): Promise<void> | void | boolean;
-    emit(event: "beforeFinish", ctx: Server.Context): Promise<void> | void | boolean;
+    emit(event: "finish", ctx: Server.Context): Promise<void> | void | boolean;
     emit(event: string, ...args: any[]): Promise<void> | void | boolean {
         const evListener = this.events[event];
 
@@ -174,18 +168,8 @@ class Server extends Function {
                 if (errHandlerRes === false)
                     throw err;
             }
-            // Trigger beforeFinish event
-            await this.emit("beforeFinish", ctx);
-
-            // Finish the response
-            const doFinish = ctx.options.finishResponse;
-
-            if (!doFinish)
-                return;
-            if (typeof doFinish === "function") 
-                return doFinish(ctx);
-
-            finishResponse(ctx);
+            // Trigger finish event
+            return this.emit("finish", ctx);
         }
     }
 
@@ -194,7 +178,11 @@ class Server extends Function {
     ls(port?: number, backlog?: number, listeningListener?: () => void): http.Server;
     ls(port?: number, listeningListener?: () => void): http.Server;
     ls(...args: any[]) {
-        return http.createServer(this).listen(...args);
+        const cb = this.cb();
+
+        return http.createServer((...args) => 
+            setImmediate(cb, ...args)
+        ).listen(...args);
     }
 }
 

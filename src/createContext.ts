@@ -13,10 +13,7 @@ function parseUrl(url: string) {
         : pathname;
 }
 
-export = function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any): any {
-    // The cookie current value
-    const cookieVal = req.headers.cookie;
-
+export = function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any) {
     const c = {
         request: {
             method: req.method,
@@ -42,8 +39,8 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
                 c.response.headers['Location'] = url;
             },
         },
-        cookie: app.get("disable cookie") ? null : {
-            value: cookieVal ? cookie.parse(cookieVal, {
+        cookie: app.get("use cookie") ? {
+            value: req.headers.cookie ? cookie.parse(req.headers.cookie, {
                 decode: decrypt
             })["connect.sid"] : "",
             options: {
@@ -69,11 +66,7 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
                     enumerable: false
                 });
             },
-        },
-        options: {
-            finishResponse: true,
-            useDefaultCookie: app.get("disable cookie") === false,
-        },
+        } : null,
         app,
     };
     return c;
