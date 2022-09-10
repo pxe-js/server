@@ -135,7 +135,7 @@ class Server extends Function {
     emit(event: string, ...args: any[]): Promise<void> | void | boolean {
         const evListener = this.events[event];
 
-        if (!evListener)
+        if (typeof evListener !== 'function')
             return false;
 
         return evListener(...args);
@@ -164,7 +164,7 @@ class Server extends Function {
             try {
                 await this.runMiddleware(ctx, 0);
             } catch (err) {
-                const errHandlerRes = this.emit("error", err, ctx);
+                const errHandlerRes = await this.emit("error", err, ctx);
                 if (errHandlerRes === false)
                     throw err;
             }
@@ -180,8 +180,8 @@ class Server extends Function {
     ls(...args: any[]) {
         const cb = this.cb();
 
-        return http.createServer((...args) =>
-            setImmediate(cb, ...args)
+        return http.createServer((...a) =>
+            setImmediate(cb, ...a)
         ).listen(...args);
     }
 }
