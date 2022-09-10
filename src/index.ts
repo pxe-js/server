@@ -64,7 +64,7 @@ declare namespace Server {
     export interface Context extends Extensible {
         readonly request: IncomingRequest;
         readonly response: ServerResponse;
-        readonly cookie: Cookie;
+        readonly cookie?: Cookie;
         readonly app: Server;
     }
 
@@ -84,7 +84,9 @@ declare namespace Server {
     }
 }
 
-interface Server extends http.RequestListener { };
+interface Server {
+    (req: http.IncomingMessage, res: http.ServerResponse): Promise<void>;
+};
 
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
@@ -143,26 +145,24 @@ class Server extends Function {
         this.ico = readFileSync(path);
     }
 
+    async runMiddleware(ctx: Server.Context, i: number, ...a: any[]) {
+        if (i < this.middlewares.length)
+            return this.middlewares[i](
+                ctx,
+                async (...args: any[]) => this.runMiddleware(ctx, i + 1, ...args),
+                ...a
+            );
+    }
+
     cb() {
         return async (req: http.IncomingMessage, res: http.ServerResponse) => {
             // End with the provided icon if request url is /favicon.ico
-            if (req.url === '/favicon.ico') 
+            if (req.url === '/favicon.ico')
                 return res.end(this.ico);
 
             const ctx = createContext(req, res, this) as Server.Context;
             try {
-                // Run middlewares
-                const runMiddleware = async (i: number, ...a: any[]) => {
-                    // Run the next middleware
-                    if (i < this.middlewares.length)
-                        return this.middlewares[i](
-                            ctx,
-                            async (...args: any[]) => runMiddleware(i + 1, ...args),
-                            ...a
-                        );
-                }
-
-                await runMiddleware(0);
+                await this.runMiddleware(ctx, 0);
             } catch (err) {
                 const errHandlerRes = this.emit("error", err, ctx);
                 if (errHandlerRes === false)
@@ -180,7 +180,7 @@ class Server extends Function {
     ls(...args: any[]) {
         const cb = this.cb();
 
-        return http.createServer((...args) => 
+        return http.createServer((...args) =>
             setImmediate(cb, ...args)
         ).listen(...args);
     }
