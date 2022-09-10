@@ -1,4 +1,4 @@
-const Server = require("@pxe/server");
+const Server = require("..");
 
 const regx = /^\/user\/(?<id>[0-9]+)/i;
 
@@ -40,4 +40,5 @@ app.ls(3000);
 // └───────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘
 
 // RAM: 8GB
-// CPU: 4 Cores (Intel(R) Core(TM) i3-1005G1 CPU)
+// CPU: 4 Cores (Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz)
+// OS: Windows 11
