@@ -1,7 +1,7 @@
-const autocannon = require("autocannon");
-const { createWriteStream } = require("fs");
-const os = require("os");
-const convert = require("./convert");
+const { exec } = require("child_process");
+const { writeFile } = require("fs/promises");
+const osDetail = require("./osDetail");
+
 const options = {
     connections: 64,
     duration: 15,
@@ -9,29 +9,30 @@ const options = {
     timeout: 8
 }
 
-function getCPU() {
-    const cpus = os.cpus();
+function parseOptions() {
+    let str = "";
 
-    return cpus.length + " Cores (" + cpus[0].model + ")";
+    for (const key in options)
+        str += "--" + key + " " + options[key] + " ";
+
+    return str;
+}
+
+function escapeColor(text) {
+    return text.replaceAll(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, "");
 }
 
 async function bench() {
-    const res = await autocannon({
-        url: "http://localhost:3000",
-        ...options
-    });
+    const proc = exec("npx autocannon http://localhost:3000 " + parseOptions());
 
-    const wstr = createWriteStream("./bench/result.txt");
+    let data = "";
 
-    wstr.write("Platform: " + os.type() + "\n");
-    wstr.write("RAM: " + convert(os.totalmem()) + "\n");
-    wstr.write("CPU: " + getCPU() + "\n\n");
+    proc.stderr.on("data", d => data += d);
 
-    wstr.write("Average Req/sec: " + res.requests.average + "\n");
-    wstr.write("Max Req/sec: " + res.requests.max + "\n");
-
-    wstr.end();
-    wstr.close(() => process.exit());
+    proc.on("exit", () => 
+        writeFile("./bench/result.txt", osDetail + escapeColor(data))
+            .then(() => process.exit())
+    );
 }
 
 module.exports = bench;
