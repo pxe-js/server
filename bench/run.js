@@ -23,16 +23,21 @@ function escapeColor(text) {
 }
 
 async function bench() {
+    console.log("Start benchmarking...");
     const proc = exec("npx autocannon http://localhost:3000 " + parseOptions());
 
     let data = "";
 
     proc.stderr.on("data", d => data += d);
 
-    proc.on("exit", () => 
+    proc.on("exit", () => {
+        console.log("Writing result to file...");
         writeFile("./bench/result.txt", osDetail + escapeColor(data))
-            .then(() => process.exit())
-    );
+            .then(() => {
+                console.log("Done!");
+                process.exit();
+            })
+    });
 }
 
 module.exports = bench;
