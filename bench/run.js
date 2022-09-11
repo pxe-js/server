@@ -29,7 +29,6 @@ async function bench() {
 
     wstr.write("Average Req/sec: " + res.requests.average + "\n");
     wstr.write("Max Req/sec: " + res.requests.max + "\n");
-    wstr.write("Total Req/sec: " + res.requests.total);
 
     wstr.end();
     wstr.close(() => process.exit());

@@ -2,6 +2,5 @@ Platform: Windows_NT
 RAM: 7.7GB
 CPU: 4 Cores (Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz)
 
-Average Req/sec: 11410.4
-Max Req/sec: 14121
-Total Req/sec: 171145
+Average Req/sec: 12221.47
+Max Req/sec: 14082
