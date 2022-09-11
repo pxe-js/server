@@ -2,6 +2,9 @@ const { exec } = require("child_process");
 const { writeFile } = require("fs/promises");
 const osDetail = require("./osDetail");
 
+/**
+ * @type {import("autocannon").Options}
+ */
 const options = {
     connections: 64,
     duration: 15,
