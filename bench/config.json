@@ -1,0 +1,6 @@
+{
+    "connections": 64,
+    "duration": 15,
+    "workers": 8,
+    "timeout": 8
+}
