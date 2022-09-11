@@ -5,6 +5,8 @@
 The server module of PXE.js.
 
 ## Installation
+Install `@pxe/server`.
+
 ```bash
 # NPM
 npm i @pxe/server
@@ -27,3 +29,10 @@ app.use(async ctx => {
 
 app.ls(3000);
 ```
+
+## Benchmarking
+Install `autocannon` then run `node bench` in the root directory of this repo.
+This will start a server then start benchmarking using `autocannon`.
+Once benchmarking is done the process is terminated.
+
+See our framework compares to other Node.js frameworks: https://web-frameworks-benchmark.netlify.app/result?l=javascript
