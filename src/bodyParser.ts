@@ -26,15 +26,11 @@ async function tryParseForm(req: http.IncomingMessage) {
 
 // Try parse to URLSearchParams
 function tryParseQuery(body: string): { [key: string]: string } {
-    const params = new URLSearchParams(body);
-    const keys = Array.from(params.keys());
-    const values = Array.from(params.values());
-    const res = {};
-
-    for (let i = 0; i < keys.length; ++i)
-        res[keys[i]] = values[i];
-
-    return res;
+    try {
+        return JSON.parse('{"' + decodeURIComponent(body).replaceAll(/"/g, '\\"').replaceAll(/&/g, '","').replaceAll(/=/g,'":"') + '"}');
+    } catch (e) {
+        return null;
+    }
 }
 
 // Get the body of a request
@@ -74,5 +70,5 @@ export const getQuery = (url: string): { [key: string]: string } => {
     if (beginQueryIndex === -1)
         return null;
 
-    return tryParseQuery(url.substring(beginQueryIndex));
+    return tryParseQuery(url.substring(beginQueryIndex + 1));
 };
