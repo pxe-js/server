@@ -1,5 +1,3 @@
-import cookie from "cookie";
-
 function parseResponse(body: any): string | Buffer {
     if (typeof body === "string" || Buffer.isBuffer(body))
         return body;
@@ -24,7 +22,6 @@ export = function finishResponse(ctx: any) {
     const requ = ctx.request;
 
     const res = resp.raw;
-    const req = requ.raw;
 
     // If nothing is set, return a 404
     if (typeof resp.body === "undefined" && !resp.type && !resp.status.code && !resp.status.message) {
@@ -46,21 +43,6 @@ export = function finishResponse(ctx: any) {
 
     if (resp.status.message)
         res.statusMessage = resp.status.message;
-
-    if (ctx.cookie && (ctx.cookie.value || ctx.cookie.removed)) {
-        // Check whether the cookie is removed or the protocol is not correct
-        // @ts-ignore
-        const doRemoveCookie = ctx.cookie.removed || (ctx.cookie.options.secure && !req.socket.encrypted);
-
-        // Set cookie
-        res.setHeader('Set-Cookie', doRemoveCookie
-            ? "connect.sid=; max-age=0"
-            : cookie.serialize(
-                "connect.sid",
-                ctx.cookie.value,
-                ctx.cookie.options
-            ));
-    }
     /**
      * If the body is primitive, we can just send it
      * If not:

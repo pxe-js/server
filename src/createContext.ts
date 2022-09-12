@@ -1,7 +1,5 @@
 import http from "http";
-import { getBody as getBodyFromRequest, getQuery } from "./bodyParser";
-import cookie from "cookie";
-import { decrypt, encrypt, iv, secretKey } from "./crypt";
+import { getBody, getQuery } from "./bodyParser";
 
 function parseUrl(url: string) {
     // For parsing URL
@@ -23,7 +21,7 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
             },
             headers: req.headers,
             get body() {
-                return getBodyFromRequest(req);
+                return getBody(req);
             },
             get query() {
                 return getQuery(req.url);
@@ -32,41 +30,8 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
         response: {
             raw: res,
             status: {},
-            headers: {},
-            redirect(url: string, permanent = false) {
-                // @ts-ignore
-                c.response.status.code = permanent ? 308 : 307;
-                c.response.headers['Location'] = url;
-            },
+            headers: {}
         },
-        cookie: app.get("use cookie") ? {
-            value: req.headers.cookie ? cookie.parse(req.headers.cookie, {
-                decode: decrypt
-            })["connect.sid"] : "",
-            options: {
-                encode: encrypt
-            },
-            removed: false,
-            iv: iv,
-            key: secretKey,
-            remove() {
-                // @ts-ignore
-                c.cookie.removed = true;
-                Object.defineProperty(c.cookie, "value", {
-                    get() {
-                        return undefined;
-                    },
-                    enumerable: false
-                });
-
-                Object.defineProperty(c.cookie, "options", {
-                    get() {
-                        return {};
-                    },
-                    enumerable: false
-                });
-            },
-        } : null,
         app,
     };
     return c;

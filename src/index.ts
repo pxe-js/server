@@ -3,6 +3,8 @@ import http from "http";
 import finishResponse from "./finishResponse";
 import { readFileSync } from "fs";
 
+const events = Symbol("events");
+
 declare namespace Server {
     export type Extensible = Record<string | number | symbol, any>;
 
@@ -32,7 +34,7 @@ declare namespace Server {
         readonly method: RequestMethod;
         readonly url: string;
         readonly headers: http.IncomingHttpHeaders;
-        readonly body: Promise<any>;
+        readonly body?: Promise<any>;
         readonly query?: Record<string, string>;
     }
 
@@ -45,16 +47,6 @@ declare namespace Server {
             message?: string;
         }
         readonly headers: Record<string, string | readonly string[] | number>;
-        redirect(url: string, permanent?: boolean): void;
-    }
-
-    export interface Cookie extends Extensible {
-        options?: CookieOptions;
-        value?: string;
-        remove(): void;
-        readonly removed: boolean;
-        readonly iv: Buffer,
-        readonly key: string,
     }
 
     export interface Middleware {
@@ -64,7 +56,6 @@ declare namespace Server {
     export interface Context extends Extensible {
         readonly request: IncomingRequest;
         readonly response: ServerResponse;
-        readonly cookie?: Cookie;
         readonly app: Server;
     }
 
@@ -72,15 +63,18 @@ declare namespace Server {
         (...args: any[]): Promise<void>;
     }
 
-    export interface CookieOptions {
-        domain?: string | undefined;
-        expires?: Date | undefined;
-        httpOnly?: boolean | undefined;
-        maxAge?: number | undefined;
-        path?: string | undefined;
-        priority?: 'low' | 'medium' | 'high' | undefined;
-        sameSite?: true | false | 'lax' | 'strict' | 'none' | undefined;
-        secure?: boolean | undefined;
+    export namespace Events {
+        export interface Finish {
+            (ctx: Server.Context): Promise<void> | void;
+        }
+
+        export interface Error {
+            (err: any, ctx: Server.Context): Promise<void> | void;
+        }
+
+        export interface Handler<T extends any[] = any[]> {
+            (...args: T): void | Promise<void>
+        } 
     }
 }
 
@@ -91,22 +85,27 @@ interface Server {
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
     private ico: Buffer;
-    private readonly props: Record<string, any>;
-    private readonly events: {
-        [ev: string]: (...args: any[]) => void | Promise<void>
-    }
-
+    private readonly props: {
+        [key: string | number | symbol]: any,
+        [events]: {
+            finish?: Server.Events.Finish,
+            error?: Server.Events.Error,
+            [key: string]: Server.Events.Handler; 
+        }
+    };
     constructor() {
         super();
         this.middlewares = [];
-        this.props = {};
-        this.events = { finish: finishResponse };
+        this.props = {
+            [events]: {
+                finish: finishResponse
+            }
+        };
         this.ico = Buffer.from("");
 
         return new Proxy(this, {
             apply(target, _, args) {
-                // @ts-ignore
-                return target.cb()(...args);
+                return target.callback(...args as Parameters<Server>);
             }
         });
     }
@@ -115,25 +114,29 @@ class Server extends Function {
         this.middlewares.push(...m);
     }
 
-    set<T>(key: string, value: T) {
+    set<T>(key: string | number | symbol, value: T) {
         this.props[key] = value;
         return value;
     }
 
-    get(key: string) {
+    get(key: string | number | symbol) {
         return this.props[key];
     }
 
-    on(event: "error", handler: (err: any, ctx: Server.Context) => Promise<void> | void): void;
-    on(event: "finish", handler: (ctx: Server.Context) => Promise<void> | void): void;
-    on(event: string, handler: (...args: any[]) => void | Promise<void>) {
-        this.events[event] = handler;
+    // Set an event handler
+    on(event: "error", handler: Server.Events.Error): void;
+    on(event: "finish", handler: Server.Events.Finish): void;
+    on(event: string, handler: Server.Events.Handler): void;
+    on(event: string, handler: Server.Events.Handler) {
+        this.props[events][event] = handler;
     }
 
-    emit(event: "error", err: any, ctx: Server.Context): Promise<void> | void | boolean;
-    emit(event: "finish", ctx: Server.Context): Promise<void> | void | boolean;
+    // Run an event handler
+    emit(event: "error", ...args: Parameters<Server.Events.Error>): Promise<void> | void | boolean;
+    emit(event: "finish", ...args: Parameters<Server.Events.Finish>): Promise<void> | void | boolean;
+    emit(event: string, ...args: Parameters<Server.Events.Handler>): Promise<void> | void | boolean;
     emit(event: string, ...args: any[]): Promise<void> | void | boolean {
-        const evListener = this.events[event];
+        const evListener = this.event(event);
 
         if (typeof evListener !== 'function')
             return false;
@@ -141,11 +144,19 @@ class Server extends Function {
         return evListener(...args);
     }
 
+    // Get the event handler
+    event(event: "error"): Server.Events.Error;
+    event(event: "finish"): Server.Events.Finish;
+    event(event: string): Server.Events.Handler;
+    event(event: string) {
+        return this.props[events][event];
+    }
+
     icon(path: string) {
         this.ico = readFileSync(path);
     }
 
-    async runMiddleware(ctx: Server.Context, i: number, ...a: any[]) {
+    private async runMiddleware(ctx: Server.Context, i: number, ...a: any[]) {
         if (i < this.middlewares.length)
             return this.middlewares[i](
                 ctx,
@@ -154,23 +165,21 @@ class Server extends Function {
             );
     }
 
-    cb() {
-        return async (req: http.IncomingMessage, res: http.ServerResponse) => {
-            // End with the provided icon if request url is /favicon.ico
-            if (req.url === '/favicon.ico')
-                return res.end(this.ico);
+    async callback(...[req, res]: Parameters<Server>) {
+        // End with the provided icon if request url is /favicon.ico
+        if (req.url === '/favicon.ico')
+            return res.end(this.ico);
 
-            const ctx = createContext(req, res, this) as Server.Context;
-            try {
-                await this.runMiddleware(ctx, 0);
-            } catch (err) {
-                const errHandlerRes = await this.emit("error", err, ctx);
-                if (errHandlerRes === false)
-                    throw err;
-            }
-            // Trigger finish event
-            return this.emit("finish", ctx);
+        const ctx = createContext(req, res, this) as Server.Context;
+        try {
+            await this.runMiddleware(ctx, 0);
+        } catch (err) {
+            const errHandlerRes = await this.emit("error", err, ctx);
+            if (errHandlerRes === false)
+                throw err;
         }
+        // Trigger finish event
+        return this.emit("finish", ctx);
     }
 
     ls(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): http.Server;
@@ -178,7 +187,7 @@ class Server extends Function {
     ls(port?: number, backlog?: number, listeningListener?: () => void): http.Server;
     ls(port?: number, listeningListener?: () => void): http.Server;
     ls(...args: any[]) {
-        const cb = this.cb();
+        const cb = this.callback.bind(this);
 
         return http.createServer((...a) =>
             setImmediate(cb, ...a)
