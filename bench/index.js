@@ -14,9 +14,9 @@ app.on("finish", ctx => {
 
 app.use(async ctx => {
     const url = ctx.request.url;
-    const req = ctx.request;
-
-    if ((req.method === "POST" && url === "/user") || (req.method === "GET" && url === "/"))
+    const method = ctx.request.method;
+    
+    if ((method === "POST" && url === "/user") || (method === "GET" && url === "/"))
         return;
      
     const id = regx.exec(url);
