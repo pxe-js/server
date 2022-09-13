@@ -6,7 +6,6 @@ require("child_process").exec("npx tsc", () => {
     fs.rm("types/bodyParser.d.ts", () => {});
     fs.rm("types/createContext.d.ts", () => {});
     fs.rm("types/finishResponse.d.ts", () => {});
-    fs.rm("types/crypt.d.ts", () => {});
 }).stderr.on("data", console.log);
 
 require("esbuild").build({
