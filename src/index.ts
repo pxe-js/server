@@ -1,7 +1,7 @@
 import createContext from "./createContext";
 import http from "http";
 import finishResponse from "./finishResponse";
-import { readFileSync } from "fs";
+import { readFile } from "fs/promises";
 
 const events = Symbol("events");
 
@@ -84,12 +84,12 @@ interface Server {
 
 class Server extends Function {
     private readonly middlewares: Server.Middleware[];
-    private ico: Buffer;
+    private ico: Buffer | string;
     private readonly props: {
         [key: string | number | symbol]: any,
         [events]: {
-            finish?: Server.Events.Finish,
-            error?: Server.Events.Error,
+            finish: Server.Events.Finish,
+            error: Server.Events.Error,
             [key: string]: Server.Events.Handler; 
         }
     };
@@ -98,10 +98,13 @@ class Server extends Function {
         this.middlewares = [];
         this.props = {
             [events]: {
-                finish: finishResponse
+                finish: finishResponse,
+                error: err => {
+                    throw err;
+                }
             }
         };
-        this.ico = Buffer.from("");
+        this.ico = "";
 
         return new Proxy(this, {
             apply(target, _, args) {
@@ -136,12 +139,7 @@ class Server extends Function {
     emit(event: "finish", ...args: Parameters<Server.Events.Finish>): Promise<void> | void | boolean;
     emit(event: string, ...args: Parameters<Server.Events.Handler>): Promise<void> | void | boolean;
     emit(event: string, ...args: any[]): Promise<void> | void | boolean {
-        const evListener = this.event(event);
-
-        if (typeof evListener !== 'function')
-            return false;
-
-        return evListener(...args);
+        return this.event(event)(...args);
     }
 
     // Get the event handler
@@ -152,8 +150,8 @@ class Server extends Function {
         return this.props[events][event];
     }
 
-    icon(path: string) {
-        this.ico = readFileSync(path);
+    async icon(path: string) {
+        this.ico = await readFile(path);
     }
 
     private async runMiddleware(ctx: Server.Context, i: number, ...a: any[]) {
@@ -174,9 +172,7 @@ class Server extends Function {
         try {
             await this.runMiddleware(ctx, 0);
         } catch (err) {
-            const errHandlerRes = await this.emit("error", err, ctx);
-            if (errHandlerRes === false)
-                throw err;
+            await this.emit("error", err, ctx);
         }
         // Trigger finish event
         return this.emit("finish", ctx);
