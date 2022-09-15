@@ -8,7 +8,6 @@ const app = new Server();
 
 app.on("finish", ctx => {
     const res = ctx.response;
-
     return res.raw.end(res.body || "");
 });
 

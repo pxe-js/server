@@ -74,7 +74,7 @@ declare namespace Server {
 
         export interface Handler<T extends any[] = any[]> {
             (...args: T): void | Promise<void>
-        } 
+        }
     }
 }
 
@@ -87,21 +87,20 @@ class Server extends Function {
     private ico: Buffer | string;
     private readonly props: {
         [key: string | number | symbol]: any,
-        [events]: {
-            finish: Server.Events.Finish,
-            error: Server.Events.Error,
-            [key: string]: Server.Events.Handler; 
-        }
     };
+    private readonly [events]: {
+        finish: Server.Events.Finish,
+        error: Server.Events.Error,
+        [key: string]: Server.Events.Handler;
+    }
     constructor() {
         super();
         this.middlewares = [];
-        this.props = {
-            [events]: {
-                finish: finishResponse,
-                error: err => {
-                    throw err;
-                }
+        this.props = {};
+        this[events] = {
+            finish: finishResponse,
+            error: err => {
+                throw err;
             }
         };
         this.ico = "";
@@ -131,7 +130,7 @@ class Server extends Function {
     on(event: "finish", handler: Server.Events.Finish): void;
     on(event: string, handler: Server.Events.Handler): void;
     on(event: string, handler: Server.Events.Handler) {
-        this.props[events][event] = handler;
+        this[events][event] = handler;
     }
 
     // Run an event handler
@@ -147,7 +146,7 @@ class Server extends Function {
     event(event: "finish"): Server.Events.Finish;
     event(event: string): Server.Events.Handler;
     event(event: string) {
-        return this.props[events][event];
+        return this[events][event];
     }
 
     async icon(path: string) {
@@ -183,10 +182,10 @@ class Server extends Function {
     ls(port?: number, backlog?: number, listeningListener?: () => void): http.Server;
     ls(port?: number, listeningListener?: () => void): http.Server;
     ls(...args: any[]) {
-        const cb = this.callback.bind(this);
+        const callback = this.callback.bind(this);
 
         return http.createServer((...a) =>
-            setImmediate(cb, ...a)
+            setImmediate(callback, ...a)
         ).listen(...args);
     }
 }
