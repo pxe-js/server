@@ -42,12 +42,12 @@
 
 // Benchmarking
 {
-    const { exec } = require("child_process");
+    const cp = require("child_process");
     const { writeFile, readFile } = require("fs/promises");
 
     async function bench() {
         console.log("Start benchmarking...");
-        const proc = exec("npx autocannon http://localhost:3000 " + parseOptions(
+        const proc = cp.exec("npx autocannon http://localhost:3000 " + parseOptions(
             await readFile("./bench/config.json")
                 .then(t => JSON.parse(t.toString()))
         ));
