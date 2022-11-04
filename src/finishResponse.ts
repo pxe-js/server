@@ -1,23 +1,6 @@
-function parseResponse(body: any): string | Buffer {
-    if (typeof body === "string" || Buffer.isBuffer(body))
-        return body;
+import { parseResponse } from "./parsers";
 
-    // Special case for primitives 
-    if (typeof body !== "object")
-        return String(body);
-
-    if (Array.isArray(body))
-        return JSON.stringify(body);
-
-    // Parsing an object
-    let parsed = body.toString();
-    if (parsed.startsWith("[object ") && parsed.endsWith("]"))
-        parsed = JSON.stringify(body);
-
-    return parsed;
-}
-
-export = function finishResponse(ctx: any) {
+export = async function finishResponse(ctx: any) {
     const resp = ctx.response;
     const requ = ctx.request;
 
