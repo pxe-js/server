@@ -2,7 +2,7 @@ import http from "http";
 import formidable from "formidable";
 
 // Try parse to JSON
-function tryParseJSON(body: string): object {
+function parseJSON(body: string): object {
     try {
         return JSON.parse(body);
     } catch (e) {
@@ -25,7 +25,7 @@ async function parseForm(req: http.IncomingMessage) {
 }
 
 // Try parse to URLSearchParams
-function tryParseQuery(body: string): { [key: string]: string } {
+function parseQuery(body: string): { [key: string]: string } {
     try {
         return JSON.parse('{"' + decodeURIComponent(body).replaceAll(/"/g, '\\"').replaceAll(/&/g, '","').replaceAll(/=/g,'":"') + '"}');
     } catch (e) {
@@ -55,9 +55,9 @@ export const getBody = async (req: http.IncomingMessage): Promise<any> => {
     if (req.headers['content-type']) {
         // Parse by content type
         if (req.headers['content-type'].startsWith('application/json'))
-            return tryParseJSON(body);
+            return parseJSON(body);
         else if (req.headers['content-type'].startsWith('application/x-www-form-urlencoded'))
-            return tryParseQuery(body);
+            return parseQuery(body);
     } 
 
     return body;
@@ -70,9 +70,10 @@ export const getQuery = (url: string): { [key: string]: string } => {
     if (beginQueryIndex === -1)
         return null;
 
-    return tryParseQuery(url.substring(beginQueryIndex + 1));
+    return parseQuery(url.substring(beginQueryIndex + 1));
 };
 
+// Convert to url without query
 export function parseUrl(url: string) {
     // For parsing URL
     const endUrlIndex = url.indexOf('?');
@@ -81,4 +82,24 @@ export function parseUrl(url: string) {
     return pathname.endsWith("/") && pathname !== "/"
         ? pathname.substring(0, pathname.length - 1)
         : pathname;
+}
+
+// Parse response body to string
+export function parseResponse(body: any): string | Buffer {
+    if (typeof body === "string" || Buffer.isBuffer(body))
+        return body;
+
+    // Special case for primitives 
+    if (typeof body !== "object")
+        return String(body);
+
+    if (Array.isArray(body))
+        return JSON.stringify(body);
+
+    // Parsing an object
+    let parsed = body.toString();
+    if (parsed.startsWith("[object ") && parsed.endsWith("]"))
+        parsed = JSON.stringify(body);
+
+    return parsed;
 }
