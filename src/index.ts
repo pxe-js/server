@@ -65,15 +65,15 @@ declare namespace Server {
 
     export namespace Events {
         export interface Finish {
-            (ctx: Server.Context): Promise<void> | void;
+            (ctx: Server.Context): Promise<void>;
         }
 
         export interface Error {
-            (err: any, ctx: Server.Context): Promise<void> | void;
+            (err: any, ctx: Server.Context): Promise<void>;
         }
 
         export interface Handler<T extends any[] = any[]> {
-            (...args: T): void | Promise<void>
+            (...args: T): Promise<void>;
         }
     }
 }
@@ -99,8 +99,9 @@ class Server extends Function {
         this.props = {};
         this[events] = {
             finish: finishResponse,
-            error: err => {
-                throw err;
+            error: async (err, ctx) => {
+                console.error(err);
+                ctx.response.status.code = 500;
             }
         };
         this.ico = "";
@@ -125,11 +126,22 @@ class Server extends Function {
         return this.props[key];
     }
 
-    // Set an event handler
+    // Append to current event handler
     on(event: "error", handler: Server.Events.Error): void;
     on(event: "finish", handler: Server.Events.Finish): void;
     on(event: string, handler: Server.Events.Handler): void;
     on(event: string, handler: Server.Events.Handler) {
+        this[events][event] = async (...args) => {
+            await this[events][event](event, ...args);
+            return handler(...args);
+        };
+    }
+
+    // Set an event handler
+    setEvent(event: "error", handler: Server.Events.Error): void;
+    setEvent(event: "finish", handler: Server.Events.Finish): void;
+    setEvent(event: string, handler: Server.Events.Handler): void;
+    setEvent(event: string, handler: Server.Events.Handler) {
         this[events][event] = handler;
     }
 
@@ -138,14 +150,14 @@ class Server extends Function {
     emit(event: "finish", ...args: Parameters<Server.Events.Finish>): Promise<void> | void | boolean;
     emit(event: string, ...args: Parameters<Server.Events.Handler>): Promise<void> | void | boolean;
     emit(event: string, ...args: any[]): Promise<void> | void | boolean {
-        return this.event(event)(...args);
+        return this.getEvent(event)(...args);
     }
 
     // Get the event handler
-    event(event: "error"): Server.Events.Error;
-    event(event: "finish"): Server.Events.Finish;
-    event(event: string): Server.Events.Handler;
-    event(event: string) {
+    getEvent(event: "error"): Server.Events.Error;
+    getEvent(event: "finish"): Server.Events.Finish;
+    getEvent(event: string): Server.Events.Handler;
+    getEvent(event: string) {
         return this[events][event];
     }
 
