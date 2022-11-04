@@ -11,14 +11,14 @@ function tryParseJSON(body: string): object {
 }
 
 // Try parse form
-async function tryParseForm(req: http.IncomingMessage) {
+async function parseForm(req: http.IncomingMessage) {
     const form = formidable({
         keepExtensions: true
     });
-    return new Promise((res, rej) =>
+    return new Promise(res =>
         form.parse(req, (err, fields, files) => {
             if (err)
-                return rej(err);
+                return res(null);
             res({ fields, files });
         })
     );
@@ -37,7 +37,7 @@ function tryParseQuery(body: string): { [key: string]: string } {
 export const getBody = async (req: http.IncomingMessage): Promise<any> => {
     // Special case for form
     if (req.headers['content-type']?.startsWith('multipart/form-data'))
-        return tryParseForm(req);
+        return parseForm(req);
 
     // JSON and query body
     const buffers = [];
@@ -72,3 +72,13 @@ export const getQuery = (url: string): { [key: string]: string } => {
 
     return tryParseQuery(url.substring(beginQueryIndex + 1));
 };
+
+export function parseUrl(url: string) {
+    // For parsing URL
+    const endUrlIndex = url.indexOf('?');
+    const pathname = url.slice(0, endUrlIndex === -1 ? url.length : endUrlIndex);
+
+    return pathname.endsWith("/") && pathname !== "/"
+        ? pathname.substring(0, pathname.length - 1)
+        : pathname;
+}

@@ -1,18 +1,8 @@
 import http from "http";
-import { getBody, getQuery } from "./bodyParser";
-
-function parseUrl(url: string) {
-    // For parsing URL
-    const endUrlIndex = url.indexOf('?');
-    const pathname = url.slice(0, endUrlIndex === -1 ? url.length : endUrlIndex);
-
-    return pathname.endsWith("/") && pathname !== "/"
-        ? pathname.substring(0, pathname.length - 1)
-        : pathname;
-}
+import { getBody, getQuery, parseUrl } from "./parsers";
 
 export = function createContext(req: http.IncomingMessage, res: http.ServerResponse, app: any) {
-    const c = {
+    return {
         request: {
             method: req.method,
             raw: req,
@@ -34,5 +24,4 @@ export = function createContext(req: http.IncomingMessage, res: http.ServerRespo
         },
         app,
     };
-    return c;
 }
