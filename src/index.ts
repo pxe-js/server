@@ -126,22 +126,11 @@ class Server extends Function {
         return this.props[key];
     }
 
-    // Append to current event handler
+    // Set an event handler
     on(event: "error", handler: Server.Events.Error): void;
     on(event: "finish", handler: Server.Events.Finish): void;
     on(event: string, handler: Server.Events.Handler): void;
     on(event: string, handler: Server.Events.Handler) {
-        this[events][event] = async (...args) => {
-            await this[events][event](event, ...args);
-            return handler(...args);
-        };
-    }
-
-    // Set an event handler
-    setEvent(event: "error", handler: Server.Events.Error): void;
-    setEvent(event: "finish", handler: Server.Events.Finish): void;
-    setEvent(event: string, handler: Server.Events.Handler): void;
-    setEvent(event: string, handler: Server.Events.Handler) {
         this[events][event] = handler;
     }
 
@@ -162,7 +151,7 @@ class Server extends Function {
     }
 
     async icon(path: string) {
-        this.ico = await readFile(path);
+        return this.ico = await readFile(path);
     }
 
     private async runMiddleware(ctx: Server.Context, i: number, ...a: any[]) {
